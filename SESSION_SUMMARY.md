@@ -10,18 +10,19 @@ Two-bot system: **Market Analyst** (generates trading signals) + **Trader Bot** 
 |---|---|---|
 | Language | Python 3.12 | ✅ |
 | Exchange | MEXC via CCXT | ✅ |
+| Realtime Data | ccxt.pro WebSocket | ✅ |
 | Finance Data | yfinance (primary) + CoinGecko (backup) | ✅ |
-| Bot Communication | Redis pub/sub (async) | ✅ |
+| Bot Communication | Redis pub/sub (Docker) | ✅ |
 | Config | YAML + .env | ✅ |
 | Data Models | Pydantic v2 | ✅ |
-| TA Indicators | pandas-ta | ✅ |
+| TA Indicators | pandas_ta | ✅ |
 | Logging | structlog with rotation | ✅ |
-| Dashboard | React + Vite + TypeScript | ✅ |
+| Dashboard | React + Vite + TypeScript (Netlify) | ✅ |
 | Backend API | FastAPI | ✅ |
 | Scheduling | APScheduler | ⏳ Planned |
 | DB | SQLite (dev) → PostgreSQL (prod) | ⏳ Phase 4 |
-| Testing | pytest (25 tests) | ✅ |
-| Deployment | Docker + docker-compose | ✅ |
+| Testing | pytest (46 tests) | ✅ |
+| Deployment | Docker Desktop + docker-compose | ✅ |
 | Notifications | Telegram + Email | ✅ |
 
 ### Architecture
@@ -29,6 +30,8 @@ Two-bot system: **Market Analyst** (generates trading signals) + **Trader Bot** 
 Analyst Bot → Redis (signals:market) → Trader Bot → PaperEngine (or MEXC)
                                   ↓
                           Dashboard (React) + FastAPI API
+                                  ↓
+                     ccxt.pro WebSocket (realtime prices)
 ```
 
 ### Completed Design Decisions (12 gaps filled)
@@ -64,7 +67,7 @@ Analyst Bot → Redis (signals:market) → Trader Bot → PaperEngine (or MEXC)
 
 #### Phase 2 — Analyst Bot ✅
 - `analyst/data_fetcher.py` — yfinance + CoinGecko fallback with tenacity retry
-- `analyst/indicator_calculator.py` — All TA indicators via pandas-ta
+- `analyst/indicator_calculator.py` — All TA indicators via pandas_ta
 - `analyst/pair_selector.py` — Dynamic top-N pairs by volume (CCXT), fallback list
 - `analyst/signal_aggregator.py` — Weighted / Strict / Majority modes
 - `analyst/strategy_runner.py` — Runs all 5 enabled strategies
@@ -84,6 +87,26 @@ Analyst Bot → Redis (signals:market) → Trader Bot → PaperEngine (or MEXC)
 - `trader/notifier.py` — Telegram + Email notifications
 - `trader/trader_bot.py` — Full orchestrator: subscribe to signals → risk check → paper/live execute → track → notify
 
+#### Phase 4 — Dashboard API + DB ✅
+- FastAPI with 8 API endpoints
+- SQLAlchemy ORM (SignalRecord, PositionRecord, TradeRecord)
+- Alembic migrations (auto-generated)
+- DB persistence wired into analyst + trader bots
+- React frontend with 7 views
+
+#### Phase 5 — Docker Polish ✅
+- Multi-stage Dockerfiles with layer caching
+- docker-compose.yml (redis + analyst + trader + web)
+- docker-compose.override.yml (hot reload for dev)
+- `.dockerignore`
+
+#### Phase 6 — Realtime Data + Tests ✅
+- `shared/realtime_data.py` — ccxt.pro WebSocket manager
+- Ticker watchers (per-symbol, concurrent) + OHLCV watchers (per-symbol per-timeframe, concurrent via gather)
+- Price callbacks update PositionTracker (PnL) and PaperEngine (SL/TP) in real-time
+- Graceful no-op if MEXC API keys not provided
+- 46 tests total, all passing
+
 ### Project Structure
 ```
 mexc-trading-bot/
@@ -96,7 +119,8 @@ mexc-trading-bot/
 │   ├── config_loader.py       # YAML + .env loader
 │   ├── redis_client.py        # Async Redis pub/sub + heartbeat
 │   ├── logger.py              # structlog with rotation (10MB, keep 5)
-│   └── rate_limiter.py        # Token-bucket rate limiter
+│   ├── rate_limiter.py        # Token-bucket rate limiter
+│   └── realtime_data.py       # ccxt.pro WebSocket ticker + OHLCV watcher
 ├── analyst/
 │   ├── data_fetcher.py        # yfinance + CoinGecko
 │   ├── indicator_calculator.py # RSI, MACD, EMA, BB, Volume MA
@@ -116,7 +140,7 @@ mexc-trading-bot/
 │   ├── risk_manager.py        # Position sizing, drawdown, circuit breaker
 │   ├── position_tracker.py    # Track open/closed positions
 │   ├── notifier.py            # Telegram + Email
-│   ├── trader_bot.py          # Orchestrator
+│   ├── trader_bot.py          # Orchestrator + RealtimeDataManager integration
 │   └── exchange/
 │       └── mexc_client.py     # MEXC spot + futures CCXT wrapper
 ├── frontend/                  # React + Vite + TypeScript
@@ -127,48 +151,52 @@ mexc-trading-bot/
 │       └── types/index.ts     # Shared types
 ├── web/
 │   ├── main.py                # FastAPI app with lifespan, CORS
-│   └── routers.py             # 8 API endpoints (status, signals, positions, trades, performance, settings, override)
+│   └── routers.py             # 8 API endpoints
 ├── db/
-│   ├── models.py              # SQLAlchemy ORM: SignalRecord, PositionRecord, TradeRecord
+│   ├── models.py              # SQLAlchemy ORM
 │   ├── database.py            # Async engine + session factory
-│   ├── repository.py          # save_signal, save_trade, save_position helpers
-│   └── migrations/            # Alembic (initial migration generated)
+│   ├── repository.py          # save helpers
+│   └── migrations/            # Alembic
 ├── tests/
 │   ├── test_analyst.py        # 9 tests
 │   ├── test_trader.py         # 16 tests
 │   ├── test_db.py             # 4 tests
-│   └── test_integration.py    # 6 tests
+│   ├── test_integration.py    # 6 tests
+│   └── test_realtime.py       # 11 tests
 ├── scripts/
 │   ├── run_analyst.py
 │   └── run_trader.py
-├── requirements.txt           # Locked deps for Docker
+├── requirements.txt
 ├── docker-compose.yml
-├── docker-compose.override.yml # Dev hot-reload
+├── docker-compose.override.yml
 ├── .dockerignore
 ├── Dockerfile.analyst
 ├── Dockerfile.trader
 ├── Dockerfile.web
 ├── pyproject.toml
 ├── alembic.ini
-└── .gitignore
+├── .gitignore
+└── SESSION_SUMMARY.md
 ```
 
-### All Phases Complete ✅
-- [x] **Phase 1**: Project scaffold, config, shared modules
-- [x] **Phase 2**: Analyst bot — DataFetcher, 5 strategies, SignalAggregator, orchestrator
-- [x] **Phase 3**: Trader bot — PaperEngine, MEXC client, RiskManager, PositionTracker, Notifier
-- [x] **Phase 4**: Dashboard API + DB — FastAPI routes, SQLAlchemy models, Alembic, DB persistence
-- [x] **Phase 5**: Docker polish — fixed Dockerfiles, .dockerignore, dev override, requirements.txt
-- [x] **Phase 6**: Tests — 35 total (integration + edge cases + DB), coverage config
-
 ### Tests
-- **35 total tests**, all passing
+- **46 total tests**, all passing
 - `pytest tests/ -v` to run
 - `pytest --cov=shared,analyst,trader,db,web tests/` for coverage
-- Run with: `pytest tests/ -v`
+
+### Environment
+- **Docker Desktop 4.77.0** — installed and running (WSL2 backend)
+- **Redis 7-alpine** — running in Docker container on port 6379
+- Redis connectivity verified from Python with `redis-py`
+- Python 3.12.10, `.venv` at project root
+- **MEXC API** — configured in `.env`, verified (USDT balance: ~$0 dust)
+- **Frontend deployed** to Netlify: https://mexctradingbot.netlify.app
+- `VITE_API_URL` set to `http://localhost:8000` (update when backend deployed)
+- All 46 tests pass in ~4s
+- `aiodns` uninstalled (conflicts with Docker Desktop WSL2 DNS on Windows; not needed in Docker/Linux containers)
 
 ### Notes
-- Docker + Redis not installed yet
 - User will provide MEXC API key + secret for live mode
 - Paper mode works immediately with virtual balance
+- ccxt.pro real-time data gracefully degrades if no MEXC API keys provided
 - Session date: 2026-06-14

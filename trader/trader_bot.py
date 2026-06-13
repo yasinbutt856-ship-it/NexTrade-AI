@@ -13,6 +13,7 @@ from shared.models import (
     OrderSide,
     OrderType,
 )
+from shared.realtime_data import RealtimeDataManager
 from shared.redis_client import RedisClient
 from trader.paper_engine import PaperEngine
 from trader.exchange.mexc_client import MEXCClient
@@ -74,6 +75,18 @@ class TraderBot:
                 use_sandbox=exchange_cfg.get("use_sandbox", False),
             )
 
+        self._ws_started = False
+        self._realtime: Optional[RealtimeDataManager] = None
+        ws_key = self.config_loader.get_env("MEXC_API_KEY", "")
+        ws_secret = self.config_loader.get_env("MEXC_API_SECRET", "")
+        if ws_key and ws_secret:
+            self._realtime = RealtimeDataManager(api_key=ws_key, api_secret=ws_secret)
+            self._realtime.on_price(self._on_price_update)
+
+    async def _on_price_update(self, symbol: str, price: float) -> None:
+        self.position_tracker.update_price(symbol, price)
+        await self.paper_engine.update_price(symbol, price)
+
     async def start(self) -> None:
         self._running = True
         loop = asyncio.get_running_loop()
@@ -85,6 +98,12 @@ class TraderBot:
                 pass
 
         await self.redis.connect()
+
+        if self._realtime:
+            asyncio.create_task(self._realtime.start(
+                symbols=["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"],
+            ))
+
         logger.info(
             "trader_bot_started",
             mode=self.mode.value,
@@ -127,6 +146,8 @@ class TraderBot:
         await self.redis.disconnect()
         if self.exchange:
             await self.exchange.close()
+        if self._realtime:
+            await self._realtime.stop()
         logger.info("trader_bot_stopped")
 
     async def _handle_signal(self, data: dict) -> None:
