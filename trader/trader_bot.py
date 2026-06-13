@@ -3,6 +3,7 @@ import signal
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
+from db.repository import save_trade, save_position
 from shared.config_loader import ConfigLoader
 from shared.logger import get_logger
 from shared.models import (
@@ -206,7 +207,7 @@ class TraderBot:
             )
             fill_price = float(result.get("price", price))
 
-        self.position_tracker.open_position(
+        pos = self.position_tracker.open_position(
             symbol=symbol,
             side=OrderSide.BUY,
             entry_price=fill_price,
@@ -215,6 +216,19 @@ class TraderBot:
             take_profit=take_profit,
         )
         self.risk_manager.record_trade(symbol)
+
+        try:
+            await save_position(pos, self.mode.value)
+            await save_trade(
+                symbol=symbol,
+                side="buy",
+                price=fill_price,
+                quantity=quantity,
+                fee=0.001 * fill_price * quantity,
+                mode=self.mode.value,
+            )
+        except Exception as e:
+            logger.error("db_save_trade_error", error=str(e))
 
         await self.notifier.send_trade_notification(
             symbol=symbol,
@@ -251,6 +265,20 @@ class TraderBot:
             self.risk_manager.update_balance(
                 self.paper_engine.balance if self.mode == BotMode.PAPER else 10000.0
             )
+
+            try:
+                await save_trade(
+                    symbol=symbol,
+                    side="sell",
+                    price=exit_price,
+                    quantity=pos.quantity,
+                    fee=0.001 * exit_price * pos.quantity,
+                    pnl=closed.realized_pnl,
+                    mode=self.mode.value,
+                )
+            except Exception as e:
+                logger.error("db_save_trade_error", error=str(e))
+
             await self.notifier.send_trade_notification(
                 symbol=symbol,
                 action="sell",

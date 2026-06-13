@@ -1,13 +1,13 @@
 import asyncio
 import signal
 from datetime import datetime, timezone
-from typing import Optional
 
 from analyst.data_fetcher import DataFetcher
 from analyst.indicator_calculator import IndicatorCalculator
 from analyst.pair_selector import PairSelector
 from analyst.signal_aggregator import SignalAggregator
 from analyst.strategy_runner import StrategyRunner
+from db.repository import save_signal
 from shared.config_loader import ConfigLoader
 from shared.logger import get_logger
 from shared.redis_client import RedisClient
@@ -128,6 +128,11 @@ class AnalystBot:
             signal_data["timeframe"] = timeframe
 
             await self.redis.publish(self.signal_channel, signal_data)
+            try:
+                await save_signal(signal, timeframe)
+            except Exception as e:
+                logger.error("db_save_signal_error", error=str(e))
+
             logger.info(
                 "signal_published",
                 symbol=symbol,
