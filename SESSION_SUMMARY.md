@@ -185,6 +185,8 @@ mexc-trading-bot/
 - `pytest --cov=shared,analyst,trader,db,web tests/` for coverage
 
 ### Environment
+- **GitHub**: https://github.com/abeermeer/mexc-trading-bot (private repo)
+- **Frontend**: https://mexctradingbot.netlify.app
 - **Docker Desktop 4.77.0** — installed and running (WSL2 backend)
 - **Redis 7-alpine** — running in Docker container on port 6379
 - Redis connectivity verified from Python with `redis-py`
