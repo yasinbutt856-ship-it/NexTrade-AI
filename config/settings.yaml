@@ -1,0 +1,75 @@
+bot:
+  name: mexc-trading-bot
+  mode: paper  # paper | live
+  version: 0.1.0
+
+analyst:
+  timeframes:
+    - 15m
+    - 1h
+    - 4h
+  indicator_periods:
+    rsi: 14
+    macd_fast: 12
+    macd_slow: 26
+    macd_signal: 9
+    ema_short: 9
+    ema_long: 21
+    bollinger_period: 20
+    bollinger_std: 2
+    volume_ma_period: 20
+  signal_interval_seconds: 300  # 5 min between signal generation cycles
+  max_pairs_to_analyze: 10
+  heartbeat_interval_seconds: 30
+
+trader:
+  max_position_size_usdt: 1000
+  max_daily_drawdown_pct: 5.0
+  circuit_breaker_drawdown_pct: 10.0
+  cooldown_seconds: 300
+  default_sl_pct: 2.0
+  default_tp_pct: 4.0
+  min_volume_usdt: 10000
+  stale_signal_timeout_seconds: 300
+
+exchange:
+  name: mexc
+  use_sandbox: false
+  rate_limit_per_second: 20
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  signal_channel: signals:market
+  heartbeat_channel: heartbeat:analyst
+  db: 0
+
+logging:
+  level: INFO
+  format: json  # json | console
+  file: logs/trading.log
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+  error_file: logs/error.log
+
+dashboard:
+  host: 0.0.0.0
+  port: 8000
+  username: admin
+  password_env_var: DASHBOARD_PASSWORD
+  session_secret_env_var: DASHBOARD_SECRET
+
+notifications:
+  telegram:
+    enabled: true
+    bot_token_env_var: TELEGRAM_BOT_TOKEN
+    chat_id_env_var: TELEGRAM_CHAT_ID
+  email:
+    enabled: true
+    smtp_host_env_var: SMTP_HOST
+    smtp_port_env_var: SMTP_PORT
+    smtp_user_env_var: SMTP_USER
+    smtp_password_env_var: SMTP_PASSWORD
+    from_addr_env_var: EMAIL_FROM
+    to_addr_env_var: EMAIL_TO

@@ -1,0 +1,71 @@
+from typing import Any, Callable, Optional
+import json
+import redis.asyncio as aioredis
+from shared.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+class RedisClient:
+    def __init__(self, host: str = "localhost", port: int = 6379, password: str = "", db: int = 0):
+        self._connection_params = {
+            "host": host,
+            "port": port,
+            "password": password or None,
+            "db": db,
+            "decode_responses": True,
+        }
+        self._pub: Optional[aioredis.Redis] = None
+        self._sub: Optional[aioredis.Redis] = None
+
+    async def connect(self) -> None:
+        self._pub = aioredis.Redis(**self._connection_params)
+        self._sub = aioredis.Redis(**self._connection_params)
+        await self._pub.ping()
+        await self._sub.ping()
+        logger.info("redis_connected", host=self._connection_params["host"])
+
+    async def disconnect(self) -> None:
+        if self._pub:
+            await self._pub.close()
+        if self._sub:
+            await self._sub.close()
+        logger.info("redis_disconnected")
+
+    async def publish(self, channel: str, message: dict[str, Any]) -> None:
+        if not self._pub:
+            raise RuntimeError("Redis not connected")
+        payload = json.dumps(message, default=str)
+        await self._pub.publish(channel, payload)
+        logger.debug("redis_published", channel=channel)
+
+    async def subscribe(self, channel: str, callback: Callable) -> None:
+        if not self._sub:
+            raise RuntimeError("Redis not connected")
+        pubsub = self._sub.pubsub()
+        await pubsub.subscribe(channel)
+        logger.info("redis_subscribed", channel=channel)
+        async for message in pubsub.listen():
+            if message["type"] == "message":
+                try:
+                    data = json.loads(message["data"])
+                    await callback(data)
+                except Exception as e:
+                    logger.error("redis_callback_error", error=str(e))
+
+    async def publish_heartbeat(self, channel: str, data: dict[str, Any]) -> None:
+        data["_type"] = "heartbeat"
+        await self.publish(channel, data)
+
+    async def get(self, key: str) -> Optional[str]:
+        if not self._pub:
+            raise RuntimeError("Redis not connected")
+        return await self._pub.get(key)
+
+    async def set(self, key: str, value: str, ttl: Optional[int] = None) -> None:
+        if not self._pub:
+            raise RuntimeError("Redis not connected")
+        if ttl:
+            await self._pub.setex(key, ttl, value)
+        else:
+            await self._pub.set(key, value)
