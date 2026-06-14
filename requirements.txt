@@ -5,7 +5,7 @@ python-dotenv>=1.0
 redis>=5.0
 structlog>=24.0
 pandas>=2.0
-pandas_ta>=0.3
+pandas_ta==0.4.71b0
 numpy>=1.26
 tenacity>=8.0
 apscheduler>=3.10
