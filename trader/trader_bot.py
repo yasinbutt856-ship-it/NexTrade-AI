@@ -97,7 +97,9 @@ class TraderBot:
             except NotImplementedError:
                 pass
 
+        print("DEBUG: Connecting to Redis...", flush=True)
         await self.redis.connect()
+        print("DEBUG: Redis connected", flush=True)
 
         if self._realtime:
             asyncio.create_task(self._realtime.start(

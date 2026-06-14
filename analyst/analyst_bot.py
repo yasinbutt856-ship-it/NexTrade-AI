@@ -55,7 +55,9 @@ class AnalystBot:
             except NotImplementedError:
                 pass
 
+        print("DEBUG: Connecting to Redis...", flush=True)
         await self.redis.connect()
+        print("DEBUG: Redis connected", flush=True)
         logger.info("analyst_bot_started")
 
         heartbeat_task = asyncio.create_task(self._heartbeat_loop())
