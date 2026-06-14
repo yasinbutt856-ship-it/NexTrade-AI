@@ -42,6 +42,10 @@ def setup_logging(
     root_logger = logging.getLogger()
     root_logger.setLevel(level.upper())
 
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(level.upper())
+    root_logger.addHandler(stream_handler)
+
     file_handler = logging.handlers.RotatingFileHandler(
         log_file, maxBytes=max_bytes, backupCount=backup_count
     )
