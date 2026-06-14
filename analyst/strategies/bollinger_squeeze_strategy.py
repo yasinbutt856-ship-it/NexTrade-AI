@@ -45,6 +45,6 @@ class BollingerSqueezeStrategy(BaseStrategy):
             confidence=confidence,
             metadata={
                 "bandwidth": float(current_bandwidth),
-                "is_squeeze": is_squeeze,
+                "is_squeeze": bool(is_squeeze),
             },
         )

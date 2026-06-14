@@ -1,10 +1,20 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import async_session_factory
 from db.models import SignalRecord, PositionRecord, TradeRecord, SignalActionDB, OrderSideDB, OrderStatusDB, BotModeDB
 from shared.models import Signal, Position, BotMode
+
+
+def _json_safe(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_json_safe(v) for v in obj]
+    if hasattr(obj, "item"):  # numpy scalars
+        return obj.item()
+    return obj
 
 
 async def save_signal(signal: Signal, timeframe: Optional[str] = None) -> None:
@@ -15,8 +25,8 @@ async def save_signal(signal: Signal, timeframe: Optional[str] = None) -> None:
             confidence=signal.confidence,
             price=signal.price,
             timeframe=timeframe,
-            strategy_results=[r.model_dump(mode="json") for r in signal.strategy_results],
-            signal_metadata=signal.metadata,
+            strategy_results=[_json_safe(r.model_dump(mode="json")) for r in signal.strategy_results],
+            signal_metadata=_json_safe(signal.metadata),
             created_at=datetime.now(timezone.utc),
         )
         session.add(record)
