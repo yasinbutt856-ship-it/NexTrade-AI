@@ -187,18 +187,24 @@ mexc-trading-bot/
 ### Environment
 - **GitHub**: https://github.com/abeermeer/mexc-trading-bot (private repo)
 - **Frontend**: https://mexctradingbot.netlify.app
+- **Backend (Railway)**: https://railway.app/project/64c326d5-c9b6-4362-aa19-f0c6e7d40b88
 - **Docker Desktop 4.77.0** — installed and running (WSL2 backend)
-- **Redis 7-alpine** — running in Docker container on port 6379
-- Redis connectivity verified from Python with `redis-py`
+- **Redis 7-alpine** — running in Docker container on port 6379 (local dev)
 - Python 3.12.10, `.venv` at project root
 - **MEXC API** — configured in `.env`, verified (USDT balance: ~$0 dust)
-- **Frontend deployed** to Netlify: https://mexctradingbot.netlify.app
-- `VITE_API_URL` set to `http://localhost:8000` (update when backend deployed)
 - All 46 tests pass in ~4s
 - `aiodns` uninstalled (conflicts with Docker Desktop WSL2 DNS on Windows; not needed in Docker/Linux containers)
 
-### Notes
-- User will provide MEXC API key + secret for live mode
-- Paper mode works immediately with virtual balance
-- ccxt.pro real-time data gracefully degrades if no MEXC API keys provided
-- Session date: 2026-06-14
+### Railway Deployment
+- **Project created**: `mexc-trading-bot` @ https://railway.app/project/64c326d5-c9b6-4362-aa19-f0c6e7d40b88
+- **Service**: `backend` (connected to `abeermeer/mexc-trading-bot`, Dockerfile.web, port auto-detect)
+- **Deploy triggered**: building from `master` branch
+- **MEXC env vars**: need to be set manually via Railway dashboard
+- **Redis plugin**: need to be added via Railway dashboard
+
+### Todo (Railway Dashboard)
+1. Add Redis database plugin
+2. Set env vars: `MEXC_API_KEY`, `MEXC_API_SECRET`
+3. Get auto-generated domain (or add custom)
+4. Update `VITE_API_URL` on Netlify to point to Railway domain
+5. Add analyst + trader as additional services (optional)
