@@ -1,36 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from cryptography.fernet import Fernet
-import os
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_session
 from db.models import UserRecord, BotModeDB, TradeTypeDB
 from web.auth import get_current_user, get_admin_user
+from shared.encryption import encrypt, decrypt
 
 router = APIRouter(prefix="/api/user")
-
-_CIPHER = None
-
-
-def _get_cipher():
-    global _CIPHER
-    if _CIPHER is None:
-        key = os.getenv("ENCRYPTION_KEY", Fernet.generate_key().decode())
-        if isinstance(key, str):
-            key = key.encode()
-        if len(key) != 44:
-            key = Fernet.generate_key()
-        _CIPHER = Fernet(key)
-    return _CIPHER
-
-
-def encrypt(val: str) -> str:
-    return _get_cipher().encrypt(val.encode()).decode()
-
-
-def decrypt(val: str) -> str:
-    return _get_cipher().decrypt(val.encode()).decode()
 
 
 class MexcKeysRequest(BaseModel):

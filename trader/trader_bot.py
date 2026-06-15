@@ -23,7 +23,7 @@ from trader.exchange.mexc_client import MEXCClient
 from trader.risk_manager import RiskManager
 from trader.position_tracker import PositionTracker
 from trader.notifier import Notifier
-from web.user_router import decrypt
+from shared.encryption import decrypt
 
 logger = get_logger(__name__)
 
