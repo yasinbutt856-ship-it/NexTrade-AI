@@ -153,3 +153,13 @@ class PaperEngine:
         if not pos:
             return 0.0
         return (current_price - pos.average_fill_price) * pos.quantity
+
+    def get_total_equity(self, market_prices: dict[str, float] | None = None) -> float:
+        if not market_prices:
+            return self.balance
+        total = self.balance
+        for symbol, pos in self.positions.items():
+            price = market_prices.get(symbol)
+            if price:
+                total += pos.quantity * price
+        return total

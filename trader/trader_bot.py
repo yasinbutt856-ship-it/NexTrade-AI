@@ -176,6 +176,16 @@ class TraderBot:
         if signal.action == SignalAction.HOLD:
             return
 
+        if self.mode == BotMode.PAPER:
+            market_prices: dict[str, float] = {symbol: signal.price}
+            for sym in self.paper_engine.positions:
+                if sym not in market_prices:
+                    pos = self.position_tracker.get_open_position(sym)
+                    if pos:
+                        market_prices[sym] = pos.entry_price
+            total_equity = self.paper_engine.get_total_equity(market_prices)
+            self.risk_manager.update_balance(total_equity)
+
         can_trade, reason = self.risk_manager.can_trade(symbol)
         if not can_trade:
             logger.warning("trade_blocked", symbol=symbol, reason=reason)
@@ -193,10 +203,18 @@ class TraderBot:
             return
 
     async def _open_position(self, symbol: str, price: float) -> None:
-        current_balance = self.paper_engine.balance if self.mode == BotMode.PAPER else 10000.0
-        self.risk_manager.update_balance(current_balance)
+        if self.mode == BotMode.PAPER:
+            market_prices: dict[str, float] = {symbol: price}
+            for sym in self.paper_engine.positions:
+                if sym not in market_prices:
+                    pos = self.position_tracker.get_open_position(sym)
+                    if pos:
+                        market_prices[sym] = pos.entry_price
+            available = self.paper_engine.get_total_equity(market_prices)
+        else:
+            available = 10000.0
 
-        quantity = self.risk_manager.calculate_position_size(current_balance, price)
+        quantity = self.risk_manager.calculate_position_size(available, price)
         if quantity <= 0:
             logger.warning("invalid_quantity", symbol=symbol)
             return
@@ -285,9 +303,16 @@ class TraderBot:
 
         closed = self.position_tracker.close_position(symbol, exit_price, reason)
         if closed:
-            self.risk_manager.update_balance(
-                self.paper_engine.balance if self.mode == BotMode.PAPER else 10000.0
-            )
+            if self.mode == BotMode.PAPER:
+                market_prices: dict[str, float] = {}
+                for sym in self.paper_engine.positions:
+                    p = self.position_tracker.get_open_position(sym)
+                    if p:
+                        market_prices[sym] = p.entry_price
+                total_equity = self.paper_engine.get_total_equity(market_prices)
+                self.risk_manager.update_balance(total_equity)
+            else:
+                self.risk_manager.update_balance(10000.0)
 
             try:
                 await save_trade(
@@ -334,4 +359,14 @@ class TraderBot:
             if self._last_signal_time and (now - self._last_signal_time).total_seconds() > self.stale_signal_timeout:
                 logger.warning("signals_stale_entering_standby")
                 self._standby = True
+
+            if self.mode == BotMode.PAPER and self.paper_engine.positions:
+                market_prices: dict[str, float] = {}
+                for sym in self.paper_engine.positions:
+                    p = self.position_tracker.get_open_position(sym)
+                    if p:
+                        market_prices[sym] = p.entry_price
+                total_equity = self.paper_engine.get_total_equity(market_prices)
+                self.risk_manager.update_balance(total_equity)
+
             await asyncio.sleep(15)
