@@ -1,4 +1,5 @@
 import asyncio
+import json
 import signal
 from datetime import datetime, timezone, timedelta
 from typing import Optional
@@ -368,5 +369,12 @@ class TraderBot:
                         market_prices[sym] = p.entry_price
                 total_equity = self.paper_engine.get_total_equity(market_prices)
                 self.risk_manager.update_balance(total_equity)
+
+            try:
+                hb = {"status": "alive", "timestamp": now.isoformat(), "mode": self.mode.value}
+                await self.redis.lpush("heartbeat:trader", json.dumps(hb))
+                await self.redis.ltrim("heartbeat:trader", 0, 9)
+            except Exception:
+                pass
 
             await asyncio.sleep(15)

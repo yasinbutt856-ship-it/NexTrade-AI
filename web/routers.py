@@ -52,6 +52,12 @@ async def get_status():
             if (now - ts.replace(tzinfo=timezone.utc)).total_seconds() < 120:
                 analyst_alive = True
 
+        trader_hb = await rc.lrange("heartbeat:trader", 0, 0)
+        if trader_hb:
+            ts = datetime.fromisoformat(json.loads(trader_hb[0]).get("timestamp", ""))
+            if (now - ts.replace(tzinfo=timezone.utc)).total_seconds() < 120:
+                trader_alive = True
+
         await rc.disconnect()
     except Exception:
         pass
