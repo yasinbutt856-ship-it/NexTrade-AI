@@ -83,6 +83,7 @@ class TraderBot:
         self.mode = BotMode(bot_cfg.get("mode", "paper"))
         self.signal_channel = redis_cfg.get("signal_channel", "signals:market")
         self.heartbeat_channel = redis_cfg.get("heartbeat_channel", "heartbeat:analyst")
+        self.control_channel = "bot:control"
         self.stale_signal_timeout = trader_cfg.get("stale_signal_timeout_seconds", 300)
         self.heartbeat_timeout = 60
 
@@ -135,6 +136,41 @@ class TraderBot:
     def _get_session_for_user(self, user_id: int) -> Optional[UserSession]:
         return self.sessions.get(user_id)
 
+    async def _handle_control(self, data: dict) -> None:
+        user_id = data.get("user_id")
+        action = data.get("action")
+        if not user_id:
+            return
+        try:
+            async with async_session_factory() as session:
+                from sqlalchemy import select
+                result = await session.execute(
+                    select(UserRecord).where(UserRecord.id == user_id)
+                )
+                user = result.scalar_one_or_none()
+            if action == "start" and user:
+                if user_id not in self.sessions:
+                    self.sessions[user_id] = UserSession(user)
+                    logger.info("user_session_created_realtime", user=user_id)
+            elif action == "stop":
+                old = self.sessions.pop(user_id, None)
+                if old:
+                    if old.exchange and old._exchange_created:
+                        await old.exchange.cancel_all_orders()
+                        await old.exchange.close()
+                    logger.info("user_session_removed_realtime", user=user_id)
+                    await self._push_log("info", f"User session removed: {user_id}", user=user_id)
+        except Exception as e:
+            logger.error("control_handler_error", user=user_id, error=str(e))
+
+    async def _push_log(self, level: str, message: str, **kwargs) -> None:
+        try:
+            entry = {"level": level, "message": message, "timestamp": datetime.now(timezone.utc).isoformat(), **kwargs}
+            await self.redis.lpush("logs:bot", json.dumps(entry))
+            await self.redis.ltrim("logs:bot", 0, 99)
+        except Exception:
+            pass
+
     async def _on_price_update(self, symbol: str, price: float) -> None:
         for session in self.sessions.values():
             session.position_tracker.update_price(symbol, price)
@@ -164,6 +200,7 @@ class TraderBot:
         logger.info("trader_bot_started", session_count=len(self.sessions))
 
         monitor_task = asyncio.create_task(self._monitor_loop())
+        asyncio.create_task(self.redis.subscribe(self.control_channel, self._handle_control))
         await self.redis.subscribe(self.signal_channel, self._handle_signal)
         await monitor_task
 
@@ -216,6 +253,7 @@ class TraderBot:
 
         symbol = signal.symbol
         logger.info("signal_received", symbol=symbol, action=signal.action.value, confidence=round(signal.confidence, 3))
+        await self._push_log("info", f"Signal: {symbol} {signal.action.value} ({round(signal.confidence*100)}%)", symbol=symbol)
 
         if signal.action == SignalAction.HOLD:
             return
@@ -287,9 +325,16 @@ class TraderBot:
             if not session.exchange or not session._exchange_created:
                 logger.warning("no_exchange_for_user", user=session.user_id)
                 return
+            market_type = "swap" if session.trade_type == "futures" else "spot"
+            if session.trade_type == "futures":
+                try:
+                    await session.exchange.set_leverage(symbol, 10)
+                except Exception:
+                    pass
             result = await session.exchange.create_order(
                 symbol=symbol, side=OrderSide.BUY, order_type=OrderType.MARKET,
                 quantity=quantity, price=price, stop_loss=stop_loss, take_profit=take_profit,
+                market=market_type,
             )
             fill_price = float(result.get("price", price))
 
@@ -298,6 +343,7 @@ class TraderBot:
             quantity=quantity, stop_loss=stop_loss, take_profit=take_profit,
         )
         session.risk_manager.record_trade(symbol)
+        await self._push_log("info", f"BUY {symbol} @ {fill_price} qty={quantity:.4f}", user=session.user_id, symbol=symbol)
 
         try:
             await save_position(pos, session.mode.value, user_id=session.user_id)
@@ -328,13 +374,16 @@ class TraderBot:
             if not session.exchange or not session._exchange_created:
                 logger.warning("no_exchange_for_user", user=session.user_id)
                 return
+            market_type = "swap" if session.trade_type == "futures" else "spot"
             result = await session.exchange.create_order(
-                symbol=symbol, side=OrderSide.SELL, order_type=OrderType.MARKET, quantity=pos.quantity,
+                symbol=symbol, side=OrderSide.SELL, order_type=OrderType.MARKET,
+                quantity=pos.quantity, market=market_type,
             )
             exit_price = float(result.get("price", price))
 
         closed = session.position_tracker.close_position(symbol, exit_price, reason)
         if closed:
+            await self._push_log("info", f"SELL {symbol} @ {exit_price} pnl={closed.realized_pnl:.2f}", user=session.user_id, symbol=symbol)
             if session.mode == BotMode.PAPER:
                 market_prices: dict[str, float] = {}
                 for sym in session.paper_engine.positions:

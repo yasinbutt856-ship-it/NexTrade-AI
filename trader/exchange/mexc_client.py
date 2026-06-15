@@ -112,6 +112,24 @@ class MEXCClient:
         await self.rate_limiter.acquire()
         return await ex.fetch_open_orders(symbol)
 
+    async def set_leverage(self, symbol: str, leverage: int, market: str = "swap") -> None:
+        ex = await self._get_futures() if market == "swap" else await self._get_spot()
+        await self.rate_limiter.acquire()
+        try:
+            await ex.set_leverage(leverage, symbol)
+            logger.info("leverage_set", symbol=symbol, leverage=leverage)
+        except Exception as e:
+            logger.warning("leverage_set_failed", symbol=symbol, error=str(e))
+
+    async def set_position_mode(self, hedged: bool = False) -> None:
+        ex = await self._get_futures()
+        await self.rate_limiter.acquire()
+        try:
+            await ex.set_position_mode(hedged)
+            logger.info("position_mode_set", hedged=hedged)
+        except Exception as e:
+            logger.warning("position_mode_set_failed", error=str(e))
+
     async def close(self) -> None:
         if self._spot:
             await self._spot.close()

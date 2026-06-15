@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import type { BotMode, TradeType } from "../types";
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const { data: signals } = useQuery({ queryKey: ["signals"], queryFn: () => api.signals(5) });
   const { data: performance } = useQuery({ queryKey: ["performance"], queryFn: api.performance });
   const { data: botStatus } = useQuery({ queryKey: ["botStatus"], queryFn: api.botStatus });
+  const { data: botLogs } = useQuery({ queryKey: ["botLogs"], queryFn: api.botLogs, refetchInterval: 5000 });
 
   const startBot = useMutation({
     mutationFn: () => api.controlBot("start"),
@@ -54,16 +56,16 @@ export default function Dashboard() {
             </div>
             <span className="font-heading font-bold text-lg tracking-wider hidden sm:block">NexTrade AI</span>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/settings")} className="text-sm text-gray-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">Settings</button>
-            <button onClick={() => navigate("/positions")} className="text-sm text-gray-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">Positions</button>
-            <button onClick={() => navigate("/signals")} className="text-sm text-gray-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">Signals</button>
-            <button onClick={() => navigate("/trades")} className="text-sm text-gray-400 hover:text-white px-3 py-1.5 rounded-lg transition-colors">Trades</button>
+          <div className="flex items-center gap-1 sm:gap-3 overflow-x-auto scrollbar-none">
+            <button onClick={() => navigate("/settings")} className="text-sm text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Settings</button>
+            <button onClick={() => navigate("/positions")} className="text-sm text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Positions</button>
+            <button onClick={() => navigate("/signals")} className="text-sm text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Signals</button>
+            <button onClick={() => navigate("/trades")} className="text-sm text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Trades</button>
             {user?.is_admin && (
-              <button onClick={() => navigate("/admin")} className="text-sm text-yellow-400 hover:text-yellow-300 px-3 py-1.5 rounded-lg transition-colors">Admin</button>
+              <button onClick={() => navigate("/admin")} className="text-sm text-yellow-400 hover:text-yellow-300 px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Admin</button>
             )}
             <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
-            <button onClick={logout} className="text-sm text-gray-500 hover:text-red-400 px-3 py-1.5 rounded-lg transition-colors">Logout</button>
+            <button onClick={logout} className="text-sm text-gray-500 hover:text-red-400 px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Logout</button>
           </div>
         </div>
       </nav>
@@ -177,6 +179,29 @@ export default function Dashboard() {
           <StatCard label="Open Positions" value={positions?.length ?? 0} />
         </div>
 
+        {/* Equity Curve */}
+        <div className="bg-dark-700/50 border border-white/5 rounded-2xl p-6">
+          <h2 className="font-heading text-lg font-bold mb-4">Equity Curve</h2>
+          {performance?.equity_curve && performance.equity_curve.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <AreaChart data={performance.equity_curve}>
+                <defs>
+                  <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 11 }} tickFormatter={(v) => new Date(v).toLocaleDateString()} />
+                <YAxis domain={["dataMin - 100", "dataMax + 100"]} tick={{ fill: "#6b7280", fontSize: 11 }} tickFormatter={(v) => `$${v.toLocaleString()}`} />
+                <Tooltip contentStyle={{ background: "#1c1c2e", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff" }} labelFormatter={(v) => new Date(v).toLocaleString()} />
+                <Area type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} fill="url(#eqGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center text-gray-500 py-8">No trade history yet</div>
+          )}
+        </div>
+
         {/* Signals Preview */}
         <div>
           <div className="flex items-center justify-between mb-4">
@@ -215,6 +240,25 @@ export default function Dashboard() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Bot Logs */}
+        <div>
+          <h2 className="font-heading text-lg font-bold mb-4">Bot Logs</h2>
+          <div className="bg-dark-700/50 border border-white/5 rounded-2xl overflow-hidden max-h-64 overflow-y-auto">
+            {botLogs && botLogs.length > 0 ? (
+              <div className="p-4 space-y-1.5 font-mono text-xs">
+                {botLogs.map((log, i) => (
+                  <div key={i} className={`flex gap-2 ${log.level === "error" ? "text-red-400" : log.level === "warn" ? "text-yellow-400" : "text-gray-400"}`}>
+                    <span className="text-gray-600 shrink-0">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                    <span>{log.message}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-8">No logs yet</div>
+            )}
           </div>
         </div>
 

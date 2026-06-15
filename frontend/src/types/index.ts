@@ -105,6 +105,13 @@ export interface BotControlStatus {
   max_position_usdt: number;
 }
 
+export interface BotLogEntry {
+  level: string;
+  message: string;
+  timestamp: string;
+  [key: string]: unknown;
+}
+
 export interface AdminUser {
   id: number;
   email: string;

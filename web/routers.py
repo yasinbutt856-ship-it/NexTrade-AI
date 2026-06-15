@@ -190,6 +190,25 @@ async def get_performance(session: AsyncSession = Depends(get_session)):
     }
 
 
+# --- Bot Logs ---
+@router.get("/logs")
+async def get_bot_logs(limit: int = Query(50, le=200)):
+    try:
+        rc = await _get_redis()
+        raw = await rc.lrange("logs:bot", 0, limit - 1)
+        await rc.disconnect()
+        logs = []
+        for item in raw:
+            try:
+                data = json.loads(item)
+            except Exception:
+                data = {"message": item}
+            logs.append(data)
+        return logs
+    except Exception:
+        return []
+
+
 # --- Settings ---
 @router.get("/settings")
 async def get_settings():

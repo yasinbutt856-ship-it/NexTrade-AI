@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import init_db, get_session
 from db.models import UserRecord
 from web.auth import hash_password, verify_password, create_access_token, get_current_user
+from shared.plan_limits import get_plan_limits
 
 router = APIRouter(prefix="/api/auth")
 
@@ -49,10 +50,13 @@ async def register(data: RegisterRequest, session: AsyncSession = Depends(get_se
     existing = await session.execute(select(UserRecord).where(UserRecord.email == data.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
+    plan = data.plan if data.plan in ("basic", "pro", "enterprise") else "basic"
+    limits = get_plan_limits(plan)
     user = UserRecord(
         email=data.email,
         password_hash=hash_password(data.password),
-        plan=data.plan if data.plan in ("basic", "pro", "enterprise") else "basic",
+        plan=plan,
+        max_position_usdt=limits["max_position_usdt"],
     )
     session.add(user)
     await session.commit()

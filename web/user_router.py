@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +6,8 @@ from db.database import get_session
 from db.models import UserRecord, BotModeDB, TradeTypeDB
 from web.auth import get_current_user, get_admin_user
 from shared.encryption import encrypt, decrypt
+from shared.plan_limits import get_plan_limits, enforce_plan_limit
+from shared.redis_client import RedisClient
 
 router = APIRouter(prefix="/api/user")
 
@@ -23,6 +25,17 @@ class UserSettingsRequest(BaseModel):
 
 class BotActionRequest(BaseModel):
     action: str  # "start" | "stop"
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    plan: str = "basic"
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 @router.put("/mexc-keys")
@@ -54,6 +67,12 @@ async def update_settings(
     user: UserRecord = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
+    limits = get_plan_limits(user.plan.value)
+    if data.trade_type == "futures" and limits.get("spot_only", False):
+        raise HTTPException(status_code=400, detail=f"Futures trading not available on {user.plan.value} plan")
+    ok, msg = enforce_plan_limit(user.plan.value, "max_position_usdt", data.max_position_usdt)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
     if data.mode in ("paper", "live"):
         user.mode = BotModeDB(data.mode)
     if data.trade_type in ("spot", "futures"):
@@ -78,6 +97,13 @@ async def control_bot(
     else:
         raise HTTPException(status_code=400, detail="Invalid action")
     await session.commit()
+    try:
+        rc = RedisClient()
+        await rc.connect()
+        await rc.publish("bot:control", {"user_id": user.id, "action": data.action})
+        await rc.disconnect()
+    except Exception:
+        pass
     return {"success": True, "bot_active": user.bot_active}
 
 

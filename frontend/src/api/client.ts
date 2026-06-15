@@ -35,6 +35,7 @@ export const api = {
   positions: () => request<import("../types").Position[]>("/api/positions"),
   trades: () => request<import("../types").Trade[]>("/api/trades"),
   performance: () => request<import("../types").PerformanceData>("/api/performance"),
+  botLogs: () => request<import("../types").BotLogEntry[]>("/api/logs"),
   settings: () => request<Record<string, unknown>>("/api/settings"),
 
   // Auth
