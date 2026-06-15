@@ -18,3 +18,4 @@ pycoingecko>=3.1
 sqlalchemy>=2.0
 alembic>=1.13
 aiosqlite>=0.20
+asyncpg>=0.29
