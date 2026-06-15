@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,6 +10,7 @@ from db.database import get_session
 from db.models import SignalRecord, PositionRecord, TradeRecord, SignalActionDB, OrderSideDB, OrderStatusDB, BotModeDB
 from shared.models import Signal, Position, BotMode
 from shared.redis_client import create_redis_client
+from shared.config_loader import ConfigLoader
 
 router = APIRouter(prefix="/api")
 
@@ -19,26 +21,47 @@ async def _get_redis():
     return rc
 
 
+def _get_bot_mode() -> str:
+    try:
+        cl = ConfigLoader()
+        settings = cl.load_settings()
+        return settings.get("bot", {}).get("mode", "paper")
+    except Exception:
+        return "paper"
+
+
 # --- Status ---
 @router.get("/status")
 async def get_status():
     analyst_alive = False
+    trader_alive = False
+    now = datetime.now(timezone.utc)
     try:
         rc = await _get_redis()
+
         recent = await rc.lrange("signals:recent", 0, 0)
         if recent:
             data = json.loads(recent[0])
             ts = datetime.fromisoformat(data.get("timestamp", ""))
-            if (datetime.now(timezone.utc) - ts.replace(tzinfo=timezone.utc)).total_seconds() < 300:
+            if (now - ts.replace(tzinfo=timezone.utc)).total_seconds() < 300:
                 analyst_alive = True
+
+        heartbeat = await rc.lrange("heartbeat:analyst", 0, 0)
+        if heartbeat:
+            ts = datetime.fromisoformat(json.loads(heartbeat[0]).get("timestamp", ""))
+            if (now - ts.replace(tzinfo=timezone.utc)).total_seconds() < 120:
+                analyst_alive = True
+
         await rc.disconnect()
     except Exception:
         pass
 
+    mode = _get_bot_mode()
+
     return {
-        "mode": BotMode.PAPER.value,
+        "mode": mode,
         "analyst_alive": analyst_alive,
-        "trader_alive": True,
+        "trader_alive": trader_alive,
         "uptime_seconds": 0,
     }
 

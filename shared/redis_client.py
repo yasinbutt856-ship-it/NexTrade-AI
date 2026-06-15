@@ -90,6 +90,11 @@ class RedisClient:
         else:
             await self._pub.set(key, value)
 
+    async def lpush(self, key: str, value: str) -> None:
+        if not self._pub:
+            raise RuntimeError("Redis not connected")
+        await self._pub.lpush(key, value)
+
     async def rpush(self, key: str, value: str) -> None:
         if not self._pub:
             raise RuntimeError("Redis not connected")

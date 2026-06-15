@@ -75,14 +75,19 @@ class AnalystBot:
     async def _heartbeat_loop(self) -> None:
         while self._running:
             try:
+                heartbeat_data = {
+                    "bot": self.bot_name,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "status": "alive",
+                }
                 await self.redis.publish_heartbeat(
-                    self.heartbeat_channel,
-                    {
-                        "bot": self.bot_name,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                        "status": "alive",
-                    },
+                    self.heartbeat_channel, heartbeat_data
                 )
+                try:
+                    await self.redis.lpush("heartbeat:analyst", json.dumps(heartbeat_data))
+                    await self.redis.ltrim("heartbeat:analyst", 0, 9)
+                except Exception:
+                    pass
             except Exception as e:
                 logger.error("heartbeat_error", error=str(e))
             await asyncio.sleep(self.heartbeat_interval)
@@ -133,7 +138,7 @@ class AnalystBot:
             await self.redis.publish(self.signal_channel, signal_data)
             try:
                 await self.redis.set(f"signal:latest:{symbol}:{timeframe}", json.dumps(signal_data), ttl=3600)
-                await self.redis.rpush("signals:recent", json.dumps({**signal_data, "timeframe": timeframe}))
+                await self.redis.lpush("signals:recent", json.dumps({**signal_data, "timeframe": timeframe}))
                 await self.redis.ltrim("signals:recent", 0, 199)
             except Exception as e:
                 logger.error("redis_cache_signal_error", error=str(e))
