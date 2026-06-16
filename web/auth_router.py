@@ -31,6 +31,8 @@ class AuthResponse(BaseModel):
     mode: str
     trade_type: str
     bot_active: bool
+    wallet_address: str = ""
+    wallet_type: str = ""
 
 
 class UserResponse(BaseModel):
@@ -43,6 +45,8 @@ class UserResponse(BaseModel):
     bot_active: bool
     max_position_usdt: float
     has_mexc_keys: bool
+    wallet_address: str = ""
+    wallet_type: str = ""
 
 
 @router.post("/register")
@@ -66,6 +70,8 @@ async def register(data: RegisterRequest, session: AsyncSession = Depends(get_se
         token=token, email=user.email, is_admin=user.is_admin,
         plan=user.plan.value, mode=user.mode.value, trade_type=user.trade_type.value,
         bot_active=user.bot_active,
+        wallet_address=user.wallet_address or "",
+        wallet_type=user.wallet_type or "",
     )
 
 
@@ -80,6 +86,8 @@ async def login(data: LoginRequest, session: AsyncSession = Depends(get_session)
         token=token, email=user.email, is_admin=user.is_admin,
         plan=user.plan.value, mode=user.mode.value, trade_type=user.trade_type.value,
         bot_active=user.bot_active,
+        wallet_address=user.wallet_address or "",
+        wallet_type=user.wallet_type or "",
     )
 
 
@@ -90,6 +98,8 @@ async def get_me(user: UserRecord = Depends(get_current_user)):
         plan=user.plan.value, mode=user.mode.value, trade_type=user.trade_type.value,
         bot_active=user.bot_active, max_position_usdt=user.max_position_usdt,
         has_mexc_keys=bool(user.mexc_api_key and user.mexc_api_secret),
+        wallet_address=user.wallet_address or "",
+        wallet_type=user.wallet_type or "",
     )
 
 

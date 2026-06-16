@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import WalletConnect from "../components/WalletConnect";
 import type { BotMode, TradeType } from "../types";
 
 export default function Dashboard() {
@@ -177,6 +178,15 @@ export default function Dashboard() {
           <StatCard label="Win Rate" value={performance ? `${performance.win_rate}%` : "—"} />
           <StatCard label="Total Trades" value={performance?.total_trades ?? 0} />
           <StatCard label="Open Positions" value={positions?.length ?? 0} />
+        </div>
+
+        {/* Wallet Status */}
+        <div className="bg-dark-700/50 border border-white/5 rounded-2xl p-5 flex items-center justify-between">
+          <div>
+            <h3 className="font-heading font-bold text-sm">Crypto Wallet</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Connect for auth, payments & payouts</p>
+          </div>
+          <WalletConnect />
         </div>
 
         {/* Equity Curve */}

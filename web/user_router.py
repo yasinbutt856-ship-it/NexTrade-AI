@@ -8,6 +8,7 @@ from web.auth import get_current_user, get_admin_user
 from shared.encryption import encrypt, decrypt
 from shared.plan_limits import get_plan_limits, enforce_plan_limit
 from shared.redis_client import RedisClient
+from shared.wallet import make_nonce, build_siwe_message, verify_wallet_signature
 
 router = APIRouter(prefix="/api/user")
 
@@ -119,6 +120,58 @@ async def bot_status(user: UserRecord = Depends(get_current_user)):
     }
 
 
+# Wallet endpoints
+@router.get("/wallet")
+async def get_wallet(user: UserRecord = Depends(get_current_user)):
+    return {
+        "wallet_address": user.wallet_address or "",
+        "wallet_type": user.wallet_type or "",
+        "has_wallet": bool(user.wallet_address),
+    }
+
+
+class WalletConnectRequest(BaseModel):
+    address: str
+    signature: str
+    message: str
+    wallet_type: str = "evm"
+
+
+@router.put("/wallet")
+async def save_wallet(
+    data: WalletConnectRequest,
+    user: UserRecord = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    valid = verify_wallet_signature(data.message, data.signature, data.address, data.wallet_type)
+    if not valid:
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    from sqlalchemy import select
+    wallet_exists = await session.execute(
+        select(UserRecord).where(UserRecord.wallet_address == data.address.lower())
+    )
+    existing = wallet_exists.scalar_one_or_none()
+    if existing and existing.id != user.id:
+        raise HTTPException(status_code=400, detail="Wallet already linked to another account")
+
+    user.wallet_address = data.address.lower()
+    user.wallet_type = data.wallet_type
+    await session.commit()
+    return {"success": True, "wallet_address": user.wallet_address, "wallet_type": user.wallet_type}
+
+
+@router.delete("/wallet")
+async def delete_wallet(
+    user: UserRecord = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    user.wallet_address = None
+    user.wallet_type = None
+    await session.commit()
+    return {"success": True, "message": "Wallet disconnected"}
+
+
 # Admin endpoints
 @router.get("/admin/users")
 async def list_users(
@@ -140,6 +193,8 @@ async def list_users(
             "has_mexc_keys": bool(u.mexc_api_key and u.mexc_api_secret),
             "max_position_usdt": u.max_position_usdt,
             "created_at": u.created_at.isoformat() if u.created_at else None,
+            "wallet_address": u.wallet_address or "",
+            "wallet_type": u.wallet_type or "",
         }
         for u in users
     ]

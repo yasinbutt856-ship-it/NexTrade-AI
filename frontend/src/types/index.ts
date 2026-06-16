@@ -70,6 +70,14 @@ export interface AuthResponse {
   mode: BotMode;
   trade_type: TradeType;
   bot_active: boolean;
+  wallet_address?: string;
+  wallet_type?: string;
+}
+
+export interface WalletInfo {
+  wallet_address: string;
+  wallet_type: string;
+  has_wallet: boolean;
 }
 
 export interface UserProfile {
@@ -82,6 +90,8 @@ export interface UserProfile {
   bot_active: boolean;
   max_position_usdt: number;
   has_mexc_keys: boolean;
+  wallet_address?: string;
+  wallet_type?: string;
 }
 
 export interface UserSettings {
@@ -123,4 +133,6 @@ export interface AdminUser {
   has_mexc_keys: boolean;
   max_position_usdt: number;
   created_at: string | null;
+  wallet_address?: string;
+  wallet_type?: string;
 }

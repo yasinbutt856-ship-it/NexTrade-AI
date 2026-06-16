@@ -70,6 +70,30 @@ export const api = {
     }),
   botStatus: () => request<import("../types").BotControlStatus>("/api/user/bot/status"),
 
+  // Wallet
+  walletNonce: (address: string, wallet_type: string) =>
+    request<{ nonce: string; message: string }>("/api/auth/wallet-nonce", {
+      method: "POST",
+      body: JSON.stringify({ address, wallet_type }),
+    }),
+  walletLogin: (address: string, signature: string, message: string, wallet_type: string) =>
+    request<import("../types").AuthResponse>("/api/auth/wallet-login", {
+      method: "POST",
+      body: JSON.stringify({ address, signature, message, wallet_type }),
+    }),
+  walletLink: (email: string, password: string, address: string, signature: string, message: string, wallet_type: string) =>
+    request<import("../types").AuthResponse>("/api/auth/wallet-link", {
+      method: "POST",
+      body: JSON.stringify({ email, password, address, signature, message, wallet_type }),
+    }),
+  saveWallet: (data: { address: string; signature: string; message: string; wallet_type: string }) =>
+    request<{ success: boolean; wallet_address: string; wallet_type: string }>("/api/user/wallet", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  getWallet: () => request<import("../types").WalletInfo>("/api/user/wallet"),
+  deleteWallet: () => request<{ success: boolean }>("/api/user/wallet", { method: "DELETE" }),
+
   // Admin
   adminUsers: () => request<import("../types").AdminUser[]>("/api/user/admin/users"),
 };

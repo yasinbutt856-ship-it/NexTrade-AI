@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import WalletConnect from "../components/WalletConnect";
 import type { BotMode, TradeType } from "../types";
 
 export default function Settings() {
@@ -104,6 +105,18 @@ export default function Settings() {
           >
             {saveKeys.isPending ? "Saving..." : keysSaved ? "✓ Keys Saved!" : "Save Keys"}
           </button>
+        </section>
+
+        {/* Connected Wallet */}
+        <section className="bg-dark-700/50 border border-white/5 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-heading font-bold text-lg">Connected Wallet</h2>
+              <p className="text-gray-400 text-sm">Link your crypto wallet for auth, payments & payouts</p>
+            </div>
+          </div>
+          <WalletConnect />
+          <p className="text-xs text-gray-500">Supports MetaMask (EVM) and Phantom (Solana). Your wallet is used for <strong>sign-in</strong>, future <strong>plan payments</strong>, and <strong>profit withdrawals</strong>.</p>
         </section>
 
         {/* Trading Mode */}

@@ -109,5 +109,7 @@ class UserRecord(Base):
     bot_active = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
     max_position_usdt = Column(Float, default=500.0)
+    wallet_address = Column(String(255), nullable=True, index=True)
+    wallet_type = Column(String(10), nullable=True)  # "evm" | "solana"
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)

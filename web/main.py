@@ -8,6 +8,7 @@ from db.database import init_db, close_db
 from web.routers import router
 from web.auth_router import router as auth_router, seed_admin
 from web.user_router import router as user_router
+from web.wallet_router import router as wallet_router
 from web.auth import decode_token
 
 
@@ -67,6 +68,7 @@ app.add_middleware(
 app.add_middleware(RateLimitMiddleware)
 
 app.include_router(auth_router)
+app.include_router(wallet_router)
 app.include_router(user_router)
 app.include_router(router)
 
