@@ -79,6 +79,15 @@ NexTrade AI is a production-grade algorithmic trading platform that runs on the 
 - **P&L tracking**, win rate, trade history
 - **Notifications**: Telegram + Email (SMTP)
 
+### Trust & Transparency
+- **Real social proof**: Landing page displays live user count and total trades from DB
+- **Terms of Service** (`/terms`): 9 sections covering all legal terms — NexTrade AI Ltd., Larnaca, Cyprus
+- **Privacy Policy** (`/privacy`): AES-256 encryption, no data selling, encrypted API key storage
+- **Whitepaper** (`/whitepaper`): Deep-dive on all 8 strategies, architecture (Redis pub/sub), risk management
+- **About** (`/about`): Company info, development timeline, team, architecture overview
+- **Support**: Email link (support@nextrade.ai) in navbar and footer
+- **Company footer**: Registered company name, jurisdiction, contact info on all pages
+
 ## Subscription Plans
 
 | Feature | Basic ($29) | Pro ($79) | Enterprise ($199) |
@@ -172,6 +181,11 @@ The backend exposes a REST API at `/api/*`. All authenticated endpoints require 
 | POST | `/api/auth/wallet-nonce` | Get SIWE message to sign (for wallet auth) |
 | POST | `/api/auth/wallet-login` | Sign in with crypto wallet (EVM/Solana) |
 | POST | `/api/auth/wallet-link` | Link wallet to existing email account |
+
+### Public Endpoints
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/stats` | Live platform stats (user count, total trades, win rate) |
 
 ### User Endpoints (authenticated)
 | Method | Path | Description |

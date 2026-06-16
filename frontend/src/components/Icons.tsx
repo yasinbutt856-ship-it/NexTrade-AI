@@ -244,6 +244,18 @@ export function CloseIcon({ className = "w-6 h-6" }: { className?: string }) {
   );
 }
 
+export function CompanyIcon({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="4" y="8" width="16" height="12" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 2h8l2 6H6l2-6Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 14v2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 14v2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 14v2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function ExternalLinkIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

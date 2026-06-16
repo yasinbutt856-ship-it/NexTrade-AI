@@ -28,7 +28,7 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - **64 unit tests** passing (18 new: plan_limits, auth bcrypt/JWT, encryption Fernet)
 - **Repo cleanup**: Professional README (arch diagram, API ref, setup), MIT LICENSE, .env.example, frontend README
 - **Wallet (EVM + Solana)**: `shared/wallet.py` (SIWE nonce, eth_account recover, nacl verify), endpoints (nonce, wallet-login, wallet-link, PUT/GET/DELETE wallet), WalletContext.tsx (ethers + @solana/web3.js), WalletConnect.tsx (MetaMask + Phantom buttons), wallet in Settings + Dashboard
-- **Landing page redesigned**: Hero with animated terminal sim (analyst+trader flow), gradient orbs, floating stat cards (87% win rate, 24/7), social proof (2,400+ traders); "How It Works" 3-step with connector lines; Features grid (6 cards, hover glow); Trust & Security section (6 items); Pricing (3 tiers, Pro highlighted); FAQ accordion (6 questions); CTA + footer
+- **Landing page redesigned**: Hero with animated terminal sim (analyst+trader flow), gradient orbs, floating stat cards (24/7), social proof (real user count from DB); "How It Works" 3-step with connector lines; Features grid (6 cards, hover glow); Trust & Security section (6 items); Pricing (3 tiers, Pro highlighted); FAQ accordion (6 questions); CTA + company footer with Terms/Privacy/Whitepaper links
 - **Deployed**: Latest build live on Netlify (`https://mexc-trading-bot.netlify.app`), Railway backend healthy (`{"status":"ok"}`)
 
 ## Key Decisions
@@ -45,37 +45,19 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - No Stripe/PayPal yet — signup free for all plans, wallet ready for future crypto payments
 
 ## Completed This Session
-- **Docs page** (`/docs`): 4-section help page (Getting Started, Trading Concepts, Accounts & Security, Technical) — FAQ-style Q&A, works for logged-in and anonymous users
-- **Email verification + password reset**:
-  - DB: `email_verified`, `verification_token`, `verification_token_expires`, `reset_token`, `reset_token_expires` on UserRecord
-  - Backend: register sends verification email; GET /verify-email, POST /forgot-password, POST /reset-password endpoints
-  - Notifier: added `send_custom_email(to, subject, body)` for per-user emails
-  - Frontend: VerifyEmail, ForgotPassword, ResetPassword pages; "Forgot password?" link on Login
-- **WebSocket real-time updates**:
-  - Backend: `/ws` endpoint with JWT auth (token query param), pushes status/signals/positions/performance/logs every 2s
-  - Frontend: `useWebSocket` hook with exponential backoff reconnection (1s→2s→4s→...→30s max)
-  - Dashboard updated via react-query cache; REST polling as fallback (10s interval)
-- **Withdrawal protection**:
-  - DB: `WithdrawalWhitelistRecord` table + `withdrawal_delay_hours` on UserRecord
-  - Backend: `withdrawal_router.py` — 7 endpoints (whitelist CRUD, settings, admin approve/pending)
-  - Frontend: Settings page "Withdrawal Protection" section (add/delete addresses, delay setting); Admin page approval table
-- **Frontend Design Overhaul (6/10 → 8/10)**:
-  - **20 SVG icons** replacing all emojis — `BrainIcon`, `BotIcon`, `LightningIcon`, `ChartIcon`, `ShieldIcon`, `KeyIcon`, etc.
-  - **Shared `AppNavbar`** extracted from 9 duplicated copies into single component with mobile hamburger menu
-  - **framer-motion** for page transitions (`AnimatePresence` in App.tsx), scroll-triggered reveals (`whileInView`), and micro-animations on cards
-  - **Animated `HeroIllustration`** — candlestick chart animation + animated line chart overlay + floating stat cards (87%, 24/7)
-  - **Refined design tokens** — `dark-950` background, consistent `accent-soft` color, cleaned up unused CSS
-  - **Polished UI components** — `Card`, `Badge` (10 variants), `Table<T>` (typed generic columns), `PageTransition` wrapper
-  - Auth pages (Login, Signup, VerifyEmail, ForgotPassword, ResetPassword) now use framer-motion form animations
-  - Landing page: emoji → SVG icons in features/trust/how-it-works sections, `HeroIllustration` replaces terminal sim
-  - Dashboard: SVG brain/bot/lightning icons replace emojis, `Badge`/`Table` components, framer-motion entrance animations
-  - Settings: SVG icons for each section header, `Card` wrapper, framer-motion stagger
-  - Admin/Positions/Signals/Trades: `AppNavbar` + `PageTransition` + `Badge` + `Table` components
-- **64 tests still passing**, frontend builds clean (zero errors)
+- **Real social proof from DB**: Added `GET /api/stats` endpoint returning `total_users`, `weekly_users`, `total_trades`, `win_rate` from DB. Landing hero now shows real counts instead of hardcoded "2,400+". CTA section pulls from live data.
+- **Removed fake metrics**: Removed floating "87% Win Rate" card from `HeroIllustration`. All displayed stats now come from actual DB queries.
+- **Terms of Service page** (`/terms`): 9 sections (Acceptance, Registration, Fees, Trading Risks, API Key Security, IP, Liability, Termination, Governing Law) — NexTrade AI, Larnaca, Cyprus
+- **Privacy Policy page** (`/privacy`): 7 sections — AES-256 encryption, no data selling, encrypted API keys
+- **Whitepaper page** (`/whitepaper`): Deep-dive on all 8 strategies (RSI, MACD, EMA, Volume, Bollinger, Supertrend, ADX, Ichimoku) + architecture (Redis pub/sub flow) + risk management (circuit breaker, trailing stop-loss, position sizing, cooldown)
+- **Company identity in footer**: 3-column grid (brand description, company links to Terms/Privacy/Whitepaper/Docs, contact info — support@nextrade.ai, Larnaca, Cyprus). Real links replace plain text.
+- **Support email in Navbar**: `Support` mailto: link in Navbar for anonymous users, plus `support@nextrade.ai` in footer contact section
+- **Frontend builds clean** (zero errors), pushed to GitHub, deployed to Netlify + Railway
 
 ## Remaining
-1. Stripe/PayPal payment integration + checkout flow
-2. Multi-exchange support (Binance, Bybit, etc.)
+1. Custom domain (`.netlify.app` subdomain kills trust — #1 priority)
+2. Stripe/PayPal payment integration + checkout flow
+3. Multi-exchange support (Binance, Bybit, etc.)
 
 ## Critical Context
 - Backend: `https://mexc-trading-bot-production-c215.up.railway.app/health`

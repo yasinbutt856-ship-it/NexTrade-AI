@@ -20,6 +20,7 @@ import Docs from "./pages/Docs";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Whitepaper from "./pages/Whitepaper";
+import About from "./pages/About";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchInterval: 5000, retry: 2 } },
@@ -47,6 +48,7 @@ function AnimatedRoutes() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/whitepaper" element={<Whitepaper />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
