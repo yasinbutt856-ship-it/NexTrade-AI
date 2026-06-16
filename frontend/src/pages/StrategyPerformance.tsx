@@ -4,13 +4,15 @@ import { AppNavbar } from "../components/Navbar";
 import { PageTransition } from "../components/PageTransition";
 import { api } from "../api/client";
 import { Badge } from "../components/ui/Badge";
+import { useToast } from "../context/ToastContext";
 
 export default function StrategyPerformance() {
+  const { addToast } = useToast();
   const [data, setData] = useState<Record<string, { signals: number; wins: number; losses: number; total_pnl: number; win_rate: number; avg_confidence: number }> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.strategyPerformance().then(setData).catch(() => {}).finally(() => setLoading(false));
+    api.strategyPerformance().then(setData).catch(() => { addToast("Failed to load strategy data", "error"); }).finally(() => setLoading(false));
   }, []);
 
   const entries = data ? Object.entries(data).sort((a, b) => b[1].total_pnl - a[1].total_pnl) : [];

@@ -9,6 +9,7 @@ from shared.encryption import encrypt, decrypt
 from shared.plan_limits import get_plan_limits, enforce_plan_limit
 from shared.redis_client import RedisClient
 from shared.wallet import make_nonce, build_siwe_message, verify_wallet_signature
+from trader.exchange.mexc_client import MEXCClient
 
 router = APIRouter(prefix="/api/user")
 
@@ -45,20 +46,43 @@ async def update_mexc_keys(
     user: UserRecord = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
+    client = MEXCClient(api_key=data.api_key, api_secret=data.api_secret, use_sandbox=False)
+    try:
+        validation = await client.validate_credentials()
+        await client.close()
+    except Exception as e:
+        await client.close()
+        raise HTTPException(status_code=503, detail=f"Cannot validate MEXC keys: {str(e)}")
+
+    if not validation["spot_ok"] and not validation["futures_ok"]:
+        raise HTTPException(
+            status_code=400,
+            detail="MEXC API key verification failed. Check your key and secret at mexc.com. "
+                   "Ensure Spot & Margin Trading and Read-only permissions are enabled."
+        )
+
     user.mexc_api_key = encrypt(data.api_key)
     user.mexc_api_secret = encrypt(data.api_secret)
+    user.mexc_keys_verified = True
     await session.commit()
-    return {"success": True, "message": "MEXC API keys saved"}
+    return {
+        "success": True,
+        "keys_verified": True,
+        "spot_ok": validation["spot_ok"],
+        "futures_ok": validation["futures_ok"],
+        "message": "MEXC API keys saved and verified",
+    }
 
 
 @router.get("/mexc-keys")
 async def get_mexc_keys(user: UserRecord = Depends(get_current_user)):
     if not user.mexc_api_key:
-        return {"api_key": "", "api_secret": "", "has_keys": False}
+        return {"api_key": "", "api_secret": "", "has_keys": False, "keys_verified": False}
     return {
         "api_key": decrypt(user.mexc_api_key),
         "api_secret": decrypt(user.mexc_api_secret),
         "has_keys": True,
+        "keys_verified": user.mexc_keys_verified or False,
     }
 
 
@@ -92,6 +116,8 @@ async def control_bot(
     if data.action == "start":
         if not user.mexc_api_key or not user.mexc_api_secret:
             raise HTTPException(status_code=400, detail="Set MEXC API keys first")
+        if user.mode == BotModeDB.live and not user.mexc_keys_verified:
+            raise HTTPException(status_code=400, detail="Cannot start bot in live mode: MEXC API keys are not verified. Go to Settings and re-save your keys.")
         user.bot_active = True
     elif data.action == "stop":
         user.bot_active = False

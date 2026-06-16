@@ -36,6 +36,10 @@ class UserSession:
         self.trade_type = user.trade_type.value
         self.max_position = user.max_position_usdt
 
+        from shared.plan_limits import get_plan_limits
+        self.plan = user.plan.value if hasattr(user.plan, 'value') else user.plan
+        plan_limits = get_plan_limits(self.plan)
+
         self.position_tracker = PositionTracker()
         self.risk_manager = RiskManager(
             max_position_size_usdt=user.max_position_usdt,
@@ -56,9 +60,23 @@ class UserSession:
                     api_secret=api_secret,
                     use_sandbox=False,
                 )
-                self._exchange_created = True
             except Exception as e:
                 logger.error("exchange_creation_failed", user=user.id, error=str(e))
+
+    async def validate_exchange(self) -> bool:
+        if not self.exchange:
+            return False
+        try:
+            result = await self.exchange.validate_credentials()
+            if result.get("spot_ok") or result.get("futures_ok"):
+                self._exchange_created = True
+                logger.info("exchange_validated", user=self.user_id, spot=result.get("spot_ok"), futures=result.get("futures_ok"))
+                return True
+            logger.warning("exchange_validation_failed", user=self.user_id, result=result)
+            return False
+        except Exception as e:
+            logger.error("exchange_validation_error", user=self.user_id, error=str(e))
+            return False
 
 
 class TraderBot:
@@ -125,8 +143,11 @@ class TraderBot:
         for u in users:
             active_ids.add(u.id)
             if u.id not in self.sessions:
-                self.sessions[u.id] = UserSession(u)
+                session_obj = UserSession(u)
+                self.sessions[u.id] = session_obj
                 logger.info("user_session_created", user=u.id, email=u.email, mode=u.mode.value)
+                if u.mode == BotModeDB.live and u.mexc_keys_verified:
+                    asyncio.create_task(session_obj.validate_exchange())
 
         stale = current_ids - active_ids
         for uid in stale:
@@ -150,8 +171,11 @@ class TraderBot:
                 user = result.scalar_one_or_none()
             if action == "start" and user:
                 if user_id not in self.sessions:
-                    self.sessions[user_id] = UserSession(user)
+                    session_obj = UserSession(user)
+                    self.sessions[user_id] = session_obj
                     logger.info("user_session_created_realtime", user=user_id)
+                    if user.mode == BotModeDB.live and user.mexc_keys_verified:
+                        asyncio.create_task(session_obj.validate_exchange())
             elif action == "stop":
                 old = self.sessions.pop(user_id, None)
                 if old:
@@ -265,7 +289,19 @@ class TraderBot:
                 logger.error("user_execution_error", user=uid, error=str(e))
 
     async def _execute_for_user(self, session: UserSession, signal: Signal) -> None:
+        from shared.plan_limits import get_plan_limits, enforce_plan_limit
         symbol = signal.symbol
+
+        plan_limits = get_plan_limits(session.plan)
+        if plan_limits.get("spot_only", False) and session.trade_type == "futures":
+            logger.warning("plan_spot_only", user=session.user_id, plan=session.plan)
+            return
+
+        current_pairs = len(session.position_tracker.get_all_open_positions())
+        max_pairs = plan_limits.get("max_pairs", 999)
+        if current_pairs >= max_pairs:
+            logger.warning("plan_max_pairs_reached", user=session.user_id, plan=session.plan, limit=max_pairs)
+            return
 
         if session.mode == BotMode.PAPER:
             market_prices: dict[str, float] = {symbol: signal.price}

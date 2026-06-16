@@ -5,6 +5,9 @@ PLAN_LIMITS = {
         "max_position_usdt": 500,
         "spot_only": True,
         "free_trial_days": 14,
+        "max_api_calls_per_day": 100,
+        "max_bot_hours_per_month": 720,
+        "max_trade_volume_per_month": 50000,
     },
     "pro": {
         "max_bots": 3,
@@ -12,6 +15,9 @@ PLAN_LIMITS = {
         "max_position_usdt": 5000,
         "spot_only": False,
         "free_trial_days": 14,
+        "max_api_calls_per_day": 1000,
+        "max_bot_hours_per_month": 720,
+        "max_trade_volume_per_month": 500000,
     },
     "enterprise": {
         "max_bots": 999,
@@ -19,6 +25,9 @@ PLAN_LIMITS = {
         "max_position_usdt": 999999,
         "spot_only": False,
         "free_trial_days": 14,
+        "max_api_calls_per_day": 10000,
+        "max_bot_hours_per_month": 720,
+        "max_trade_volume_per_month": 99999999,
     },
 }
 
@@ -48,3 +57,20 @@ def enforce_trial(user) -> bool:
     if is_trial_expired(user) and user.plan == "basic":
         return False
     return True
+
+
+def enforce_usage_limit(plan: str, field: str, current_value: int | float) -> tuple[bool, str]:
+    limits = get_plan_limits(plan)
+    max_val = limits.get(field)
+    if max_val is not None and current_value >= max_val:
+        return False, f"{field} limit reached for {plan} plan (max: {max_val})"
+    return True, ""
+
+
+def get_usage_limits(plan: str) -> dict:
+    limits = get_plan_limits(plan)
+    return {
+        "max_api_calls_per_day": limits.get("max_api_calls_per_day", 100),
+        "max_bot_hours_per_month": limits.get("max_bot_hours_per_month", 720),
+        "max_trade_volume_per_month": limits.get("max_trade_volume_per_month", 50000),
+    }

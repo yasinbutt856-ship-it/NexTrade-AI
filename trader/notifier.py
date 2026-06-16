@@ -1,9 +1,27 @@
 from typing import Optional
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import smtplib
+from pathlib import Path
 from shared.logger import get_logger
 
 logger = get_logger(__name__)
+
+TEMPLATES_DIR = Path(__file__).parent / "templates"
+
+def _load_template(name: str) -> str:
+    path = TEMPLATES_DIR / name
+    if path.exists():
+        return path.read_text(encoding="utf-8")
+    return ""
+
+def _render_template(template: str, **kwargs) -> str:
+    result = template
+    for key, val in kwargs.items():
+        result = result.replace("{{" + key + "}}", str(val) if val is not None else "")
+    import re
+    result = re.sub(r"\{\{#(\w+)\}}(.*?)\{\{/\1\}}", lambda m: m.group(2) if kwargs.get(m.group(1)) else "", result, flags=re.DOTALL)
+    return result
 
 
 class Notifier:
@@ -89,14 +107,19 @@ class Notifier:
             response.raise_for_status()
         logger.debug("telegram_sent")
 
-    async def send_custom_email(self, to: str, subject: str, body: str) -> None:
+    async def send_custom_email(self, to: str, subject: str, body: str, html_template: str = "", **template_vars) -> None:
         if not self.smtp_host or not self.smtp_user or not self.smtp_password or not self.email_from:
             logger.warning("email_not_configured", to=to, subject=subject)
             return
-        msg = MIMEText(body, "plain", "utf-8")
+        msg = MIMEMultipart("alternative") if html_template else MIMEText(body, "plain", "utf-8")
         msg["Subject"] = subject
         msg["From"] = self.email_from
         msg["To"] = to
+        if isinstance(msg, MIMEMultipart):
+            msg.attach(MIMEText(body, "plain", "utf-8"))
+            html_body = _render_template(_load_template(html_template), **template_vars)
+            if html_body:
+                msg.attach(MIMEText(html_body, "html", "utf-8"))
         with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
             server.starttls()
             server.login(self.smtp_user, self.smtp_password)

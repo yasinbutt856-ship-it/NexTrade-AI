@@ -58,7 +58,7 @@ export const api = {
 
   // User settings
   updateMexcKeys: (api_key: string, api_secret: string) =>
-    request<{ success: boolean }>("/api/user/mexc-keys", {
+    request<import("../types").MexcKeysSaveResponse>("/api/user/mexc-keys", {
       method: "PUT",
       body: JSON.stringify({ api_key, api_secret }),
     }),

@@ -17,6 +17,9 @@ export default function Settings() {
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [keysSaved, setKeysSaved] = useState(false);
+  const [keysVerified, setKeysVerified] = useState(false);
+  const [spotOk, setSpotOk] = useState(false);
+  const [futuresOk, setFuturesOk] = useState(false);
   const [maxPos, setMaxPos] = useState(user?.max_position_usdt || 500);
   const [withdrawalDelay, setWithdrawalDelay] = useState(24);
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -39,12 +42,23 @@ export default function Settings() {
     if (existingKeys?.has_keys) {
       setApiKey(existingKeys.api_key);
       setApiSecret(existingKeys.api_secret);
+      setKeysVerified(existingKeys.keys_verified ?? false);
     }
   }, [existingKeys]);
 
   const saveKeys = useMutation({
     mutationFn: () => api.updateMexcKeys(apiKey, apiSecret),
-    onSuccess: () => { setKeysSaved(true); updateUser({ has_mexc_keys: true }); setTimeout(() => setKeysSaved(false), 3000); },
+    onSuccess: (data) => {
+      setKeysSaved(true);
+      setKeysVerified(data.keys_verified);
+      setSpotOk(data.spot_ok);
+      setFuturesOk(data.futures_ok);
+      updateUser({ has_mexc_keys: true });
+      setTimeout(() => setKeysSaved(false), 3000);
+    },
+    onError: () => {
+      setKeysVerified(false);
+    },
   });
 
   const switchMode = useMutation({
@@ -163,7 +177,11 @@ export default function Settings() {
                     <p className="text-gray-400 text-sm">Connect your MEXC exchange account</p>
                   </div>
                 </div>
-                {user?.has_mexc_keys && <span className="flex items-center gap-1 text-accent text-sm font-semibold"><CheckIcon className="w-4 h-4" /> Connected</span>}
+                {user?.has_mexc_keys && keysVerified
+                  ? <span className="flex items-center gap-1 text-accent text-sm font-semibold"><CheckIcon className="w-4 h-4" /> Verified {spotOk ? "Spot ✓" : ""} {futuresOk ? "Futures ✓" : ""}</span>
+                  : user?.has_mexc_keys && !keysVerified
+                    ? <span className="flex items-center gap-1 text-yellow-400 text-sm font-semibold">⚠️ Not Verified</span>
+                    : null}
               </div>
 
               <div>
@@ -185,10 +203,13 @@ export default function Settings() {
                 <p>Enable <strong>Spot & Margin Trading</strong> and <strong>Read-only</strong> permissions on MEXC</p>
               </div>
 
+              {saveKeys.error && (
+                <p className="text-red-400 text-sm">{(saveKeys.error as { detail?: string })?.detail || "Failed to verify keys. Check your MEXC credentials."}</p>
+              )}
               <button onClick={() => saveKeys.mutate()} disabled={!apiKey || !apiSecret || saveKeys.isPending}
                 className="bg-accent hover:bg-accent-dark text-dark-900 font-bold px-6 py-2.5 rounded-xl transition-all disabled:opacity-40"
               >
-                {saveKeys.isPending ? "Saving..." : keysSaved ? "Keys Saved!" : "Save Keys"}
+                {saveKeys.isPending ? "Verifying with MEXC..." : keysSaved ? "Keys Verified!" : "Save & Verify Keys"}
               </button>
             </Card>
           </motion.div>

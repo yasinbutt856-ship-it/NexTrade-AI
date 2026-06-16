@@ -86,6 +86,15 @@ async def register(data: RegisterRequest, session: AsyncSession = Depends(get_se
             to=user.email,
             subject="Verify your email - NexTrade AI",
             body=f"Welcome to NexTrade AI!\n\nPlease verify your email by clicking this link:\n{verify_link}\n\nThis link expires in 24 hours.",
+            html_template="verify_email.html",
+            verify_link=verify_link,
+        )
+        await notifier.send_custom_email(
+            to=user.email,
+            subject="Welcome to NexTrade AI - Getting Started",
+            body=f"Hi {user.email},\n\nThanks for joining! Here's how to start:\n1. Get MEXC API keys\n2. Connect them in Settings\n3. Start Paper Trading\n\nThe dashboard link: https://mexc-trading-bot.netlify.app/dashboard",
+            html_template="welcome.html",
+            email=user.email,
         )
     except Exception as e:
         pass
@@ -156,6 +165,8 @@ async def forgot_password(data: ForgotPasswordRequest, session: AsyncSession = D
             to=user.email,
             subject="Reset your password - NexTrade AI",
             body=f"Reset your password by clicking this link:\n{reset_link}\n\nThis link expires in 1 hour.\n\nIf you did not request this, ignore this email.",
+            html_template="reset_password.html",
+            reset_link=reset_link,
         )
     except Exception as e:
         pass

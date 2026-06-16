@@ -112,6 +112,17 @@ export interface MexcKeys {
   api_key: string;
   api_secret: string;
   has_keys: boolean;
+  keys_verified?: boolean;
+  spot_ok?: boolean;
+  futures_ok?: boolean;
+}
+
+export interface MexcKeysSaveResponse {
+  success: boolean;
+  keys_verified: boolean;
+  spot_ok: boolean;
+  futures_ok: boolean;
+  message: string;
 }
 
 export interface BotControlStatus {

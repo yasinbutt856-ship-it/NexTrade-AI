@@ -3,8 +3,10 @@ import { motion } from "framer-motion";
 import { AppNavbar } from "../components/Navbar";
 import { PageTransition } from "../components/PageTransition";
 import { api } from "../api/client";
+import { useToast } from "../context/ToastContext";
 
 export default function AdminAnalytics() {
+  const { addToast } = useToast();
   const [data, setData] = useState<{
     total_users: number; monthly_users: number; active_bots: number;
     total_trades: number; total_pnl: number;
@@ -14,7 +16,7 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.adminAnalytics().then(setData).catch(() => {}).finally(() => setLoading(false));
+    api.adminAnalytics().then(setData).catch(() => { addToast("Failed to load analytics", "error"); }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return (

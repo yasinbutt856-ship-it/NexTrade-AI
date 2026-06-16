@@ -1,5 +1,6 @@
 from typing import Optional
 import ccxt.async_support as ccxt
+from ccxt import AuthenticationError, NetworkError, ExchangeError
 from shared.models import OrderSide, OrderType
 from shared.rate_limiter import RateLimiter
 from shared.logger import get_logger
@@ -41,6 +42,27 @@ class MEXCClient:
                 "sandbox": self._use_sandbox,
             })
         return self._futures
+
+    async def validate_credentials(self) -> dict:
+        result = {"spot_ok": False, "futures_ok": False}
+        try:
+            spot = await self._get_spot()
+            await spot.fetch_balance()
+            result["spot_ok"] = True
+        except AuthenticationError:
+            pass
+        except (NetworkError, ExchangeError):
+            if not result["spot_ok"]:
+                pass
+        try:
+            fut = await self._get_futures()
+            await fut.fetch_balance()
+            result["futures_ok"] = True
+        except AuthenticationError:
+            pass
+        except (NetworkError, ExchangeError):
+            pass
+        return result
 
     async def fetch_balance(self, market: str = "spot") -> dict:
         ex = await self._get_spot() if market == "spot" else await self._get_futures()

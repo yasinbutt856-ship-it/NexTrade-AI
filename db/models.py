@@ -135,6 +135,7 @@ class UserRecord(Base):
     strategy_settings = Column(JSON, nullable=True)
     notification_prefs = Column(JSON, nullable=True)
     selected_pairs = Column(JSON, nullable=True)
+    mexc_keys_verified = Column(Boolean, default=False)
     usage_api_calls = Column(Integer, default=0)
     usage_bot_hours = Column(Float, default=0.0)
     usage_trade_volume = Column(Float, default=0.0)
