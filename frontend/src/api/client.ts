@@ -70,6 +70,20 @@ export const api = {
     }),
   botStatus: () => request<import("../types").BotControlStatus>("/api/user/bot/status"),
 
+  // Email
+  verifyEmail: (token: string) =>
+    request<{ detail: string }>(`/api/auth/verify-email?token=${encodeURIComponent(token)}`),
+  forgotPassword: (email: string) =>
+    request<{ detail: string }>("/api/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, new_password: string) =>
+    request<{ detail: string }>("/api/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, new_password }),
+    }),
+
   // Wallet
   walletNonce: (address: string, wallet_type: string) =>
     request<{ nonce: string; message: string }>("/api/auth/wallet-nonce", {
@@ -93,6 +107,21 @@ export const api = {
     }),
   getWallet: () => request<import("../types").WalletInfo>("/api/user/wallet"),
   deleteWallet: () => request<{ success: boolean }>("/api/user/wallet", { method: "DELETE" }),
+
+  // Withdrawal Protection
+  getWhitelist: () => request<import("../types").WhitelistEntry[]>("/api/withdrawal/whitelist"),
+  addWhitelist: (data: { address: string; network: string; label: string }) =>
+    request<import("../types").WhitelistEntry>("/api/withdrawal/whitelist", { method: "POST", body: JSON.stringify(data) }),
+  deleteWhitelist: (id: number) =>
+    request<{ success: boolean }>(`/api/withdrawal/whitelist/${id}`, { method: "DELETE" }),
+  getWithdrawalSettings: () =>
+    request<{ withdrawal_delay_hours: number }>("/api/withdrawal/settings"),
+  updateWithdrawalSettings: (data: { withdrawal_delay_hours: number }) =>
+    request<{ success: boolean }>("/api/withdrawal/settings", { method: "PUT", body: JSON.stringify(data) }),
+  adminPendingApprovals: () =>
+    request<import("../types").AdminPendingApproval[]>("/api/withdrawal/admin/pending-approvals"),
+  adminApproveWhitelist: (id: number) =>
+    request<{ success: boolean }>(`/api/withdrawal/admin/approve/${id}`, { method: "POST" }),
 
   // Admin
   adminUsers: () => request<import("../types").AdminUser[]>("/api/user/admin/users"),

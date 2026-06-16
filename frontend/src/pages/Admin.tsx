@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +9,16 @@ export default function Admin() {
   const { data: users, isLoading } = useQuery({
     queryKey: ["adminUsers"],
     queryFn: api.adminUsers,
+  });
+
+  const { data: pendingApprovals, refetch: refetchApprovals } = useQuery({
+    queryKey: ["adminPendingApprovals"],
+    queryFn: api.adminPendingApprovals,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: number) => api.adminApproveWhitelist(id),
+    onSuccess: () => refetchApprovals(),
   });
 
   return (
@@ -30,12 +40,13 @@ export default function Admin() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        <div>
           <h1 className="font-heading text-2xl font-bold">Admin Panel</h1>
           <p className="text-gray-400 text-sm">Manage all users and their bot instances</p>
         </div>
 
+        {/* Users Table */}
         <div className="bg-dark-700/50 border border-white/5 rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -82,6 +93,48 @@ export default function Admin() {
                     </td>
                     <td className="px-6 py-4 text-gray-400">${u.max_position_usdt?.toFixed(0)}</td>
                     <td className="px-6 py-4 text-gray-500 text-xs">{u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Withdrawal Approvals */}
+        <div className="bg-dark-700/50 border border-white/5 rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/5">
+            <h2 className="font-heading font-bold text-lg">Withdrawal Approvals</h2>
+            <p className="text-gray-400 text-sm">Approve pending whitelist address requests</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                <th className="text-left px-6 py-4 font-medium">User</th>
+                <th className="text-left px-6 py-4 font-medium">Address</th>
+                <th className="text-left px-6 py-4 font-medium">Network</th>
+                <th className="text-left px-6 py-4 font-medium">Label</th>
+                <th className="text-left px-6 py-4 font-medium">Created</th>
+                <th className="text-right px-6 py-4 font-medium">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {!pendingApprovals || pendingApprovals.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No pending approvals</td></tr>
+              ) : (
+                pendingApprovals.map((entry) => (
+                  <tr key={entry.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
+                    <td className="px-6 py-4 text-gray-300">{entry.user_email}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-gray-300">{entry.address.slice(0, 10)}...{entry.address.slice(-6)}</td>
+                    <td className="px-6 py-4 text-gray-300">{entry.network}</td>
+                    <td className="px-6 py-4 text-gray-300">{entry.label || "—"}</td>
+                    <td className="px-6 py-4 text-gray-500 text-xs">{new Date(entry.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => approveMutation.mutate(entry.id)} disabled={approveMutation.isPending}
+                        className="bg-green-500/20 hover:bg-green-500/30 text-green-400 font-bold px-4 py-1.5 rounded-lg text-xs transition-all disabled:opacity-40"
+                      >
+                        {approveMutation.isPending ? "..." : "Approve"}
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

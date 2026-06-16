@@ -89,6 +89,20 @@ class Notifier:
             response.raise_for_status()
         logger.debug("telegram_sent")
 
+    async def send_custom_email(self, to: str, subject: str, body: str) -> None:
+        if not self.smtp_host or not self.smtp_user or not self.smtp_password or not self.email_from:
+            logger.warning("email_not_configured", to=to, subject=subject)
+            return
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["Subject"] = subject
+        msg["From"] = self.email_from
+        msg["To"] = to
+        with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+            server.starttls()
+            server.login(self.smtp_user, self.smtp_password)
+            server.send_message(msg)
+        logger.debug("custom_email_sent", to=to, subject=subject)
+
     async def _send_email(self, message: str) -> None:
         msg = MIMEText(message, "plain", "utf-8")
         msg["Subject"] = "Trading Bot Notification"

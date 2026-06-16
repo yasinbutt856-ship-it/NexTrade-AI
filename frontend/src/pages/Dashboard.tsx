@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useWebSocket } from "../hooks/useWebSocket";
 import WalletConnect from "../components/WalletConnect";
 import type { BotMode, TradeType } from "../types";
 
@@ -13,12 +14,22 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [showConfetti, setShowConfetti] = useState(false);
 
-  const { data: status } = useQuery({ queryKey: ["status"], queryFn: api.status });
-  const { data: positions } = useQuery({ queryKey: ["positions"], queryFn: api.positions });
-  const { data: signals } = useQuery({ queryKey: ["signals"], queryFn: () => api.signals(5) });
-  const { data: performance } = useQuery({ queryKey: ["performance"], queryFn: api.performance });
+  const { data: status } = useQuery({ queryKey: ["status"], queryFn: api.status, refetchInterval: 10000 });
+  const { data: positions } = useQuery({ queryKey: ["positions"], queryFn: api.positions, refetchInterval: 10000 });
+  const { data: signals } = useQuery({ queryKey: ["signals"], queryFn: () => api.signals(5), refetchInterval: 10000 });
+  const { data: performance } = useQuery({ queryKey: ["performance"], queryFn: api.performance, refetchInterval: 10000 });
   const { data: botStatus } = useQuery({ queryKey: ["botStatus"], queryFn: api.botStatus });
   const { data: botLogs } = useQuery({ queryKey: ["botLogs"], queryFn: api.botLogs, refetchInterval: 5000 });
+
+  const onWSMessage = useCallback((msg: { type: string; data: unknown }) => {
+    if (msg.type === "status") queryClient.setQueryData(["status"], msg.data);
+    if (msg.type === "signals") queryClient.setQueryData(["signals"], msg.data);
+    if (msg.type === "positions") queryClient.setQueryData(["positions"], msg.data);
+    if (msg.type === "performance") queryClient.setQueryData(["performance"], msg.data);
+    if (msg.type === "logs") queryClient.setQueryData(["botLogs"], msg.data);
+  }, [queryClient]);
+
+  useWebSocket(onWSMessage);
 
   const startBot = useMutation({
     mutationFn: () => api.controlBot("start"),

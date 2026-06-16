@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import WalletConnect from "../components/WalletConnect";
-import type { BotMode, TradeType } from "../types";
+import type { BotMode, TradeType, WhitelistEntry } from "../types";
 
 export default function Settings() {
   const { user, logout, updateUser } = useAuth();
@@ -13,6 +13,11 @@ export default function Settings() {
   const [apiSecret, setApiSecret] = useState("");
   const [keysSaved, setKeysSaved] = useState(false);
   const [maxPos, setMaxPos] = useState(user?.max_position_usdt || 500);
+  const [withdrawalDelay, setWithdrawalDelay] = useState(user?.withdrawal_delay_hours || 24);
+  const [showAddAddress, setShowAddAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState("");
+  const [newNetwork, setNewNetwork] = useState("ERC20");
+  const [newLabel, setNewLabel] = useState("");
 
   const { data: existingKeys } = useQuery({
     queryKey: ["mexcKeys"],
@@ -44,6 +49,43 @@ export default function Settings() {
   const saveMaxPos = useMutation({
     mutationFn: () => api.updateSettings({ mode: user?.mode || "paper", trade_type: user?.trade_type || "spot", max_position_usdt: maxPos }),
     onSuccess: () => {},
+  });
+
+  const { data: whitelist, refetch: refetchWhitelist } = useQuery({
+    queryKey: ["whitelist"],
+    queryFn: api.getWhitelist,
+  });
+
+  const { data: withdrawalSettings } = useQuery({
+    queryKey: ["withdrawalSettings"],
+    queryFn: api.getWithdrawalSettings,
+  });
+
+  useEffect(() => {
+    if (withdrawalSettings) {
+      setWithdrawalDelay(withdrawalSettings.withdrawal_delay_hours);
+    }
+  }, [withdrawalSettings]);
+
+  const saveWithdrawalDelay = useMutation({
+    mutationFn: () => api.updateWithdrawalSettings({ withdrawal_delay_hours: withdrawalDelay }),
+    onSuccess: () => {},
+  });
+
+  const addWhitelistMutation = useMutation({
+    mutationFn: () => api.addWhitelist({ address: newAddress, network: newNetwork, label: newLabel }),
+    onSuccess: () => {
+      setShowAddAddress(false);
+      setNewAddress("");
+      setNewNetwork("ERC20");
+      setNewLabel("");
+      refetchWhitelist();
+    },
+  });
+
+  const deleteWhitelistMutation = useMutation({
+    mutationFn: (id: number) => api.deleteWhitelist(id),
+    onSuccess: () => refetchWhitelist(),
   });
 
   return (
@@ -117,6 +159,107 @@ export default function Settings() {
           </div>
           <WalletConnect />
           <p className="text-xs text-gray-500">Supports MetaMask (EVM) and Phantom (Solana). Your wallet is used for <strong>sign-in</strong>, future <strong>plan payments</strong>, and <strong>profit withdrawals</strong>.</p>
+        </section>
+
+        {/* Withdrawal Protection */}
+        <section className="bg-dark-700/50 border border-white/5 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-heading font-bold text-lg">Withdrawal Protection</h2>
+              <p className="text-gray-400 text-sm">Manage withdrawal address whitelist and security delays</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">New Address Withdrawal Delay (hours)</label>
+            <div className="flex gap-3">
+              <input type="number" value={withdrawalDelay} onChange={(e) => setWithdrawalDelay(Number(e.target.value))}
+                className="flex-1 bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-accent/50 transition-all"
+                min={0} step={1} />
+              <button onClick={() => saveWithdrawalDelay.mutate()} disabled={saveWithdrawalDelay.isPending}
+                className="bg-accent hover:bg-accent-dark text-dark-900 font-bold px-6 py-2.5 rounded-xl transition-all disabled:opacity-40"
+              >
+                {saveWithdrawalDelay.isPending ? "..." : "Save"}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-gray-300">Whitelisted Addresses</span>
+              <button onClick={() => setShowAddAddress(!showAddAddress)}
+                className="text-xs text-accent hover:text-accent-dark font-semibold"
+              >
+                {showAddAddress ? "Cancel" : "+ Add Address"}
+              </button>
+            </div>
+
+            {showAddAddress && (
+              <div className="bg-dark-800 border border-white/10 rounded-xl p-4 space-y-3 mb-3">
+                <input type="text" value={newAddress} onChange={(e) => setNewAddress(e.target.value)}
+                  className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
+                  placeholder="Wallet address" />
+                <div className="flex gap-2">
+                  <select value={newNetwork} onChange={(e) => setNewNetwork(e.target.value)}
+                    className="bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
+                  >
+                    <option value="ERC20">ERC20</option>
+                    <option value="BEP20">BEP20</option>
+                    <option value="SOL">SOL</option>
+                    <option value="TRC20">TRC20</option>
+                    <option value="ARBITRUM">ARBITRUM</option>
+                  </select>
+                  <input type="text" value={newLabel} onChange={(e) => setNewLabel(e.target.value)}
+                    className="flex-1 bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
+                    placeholder="Label (e.g. My Wallet)" />
+                </div>
+                <button onClick={() => addWhitelistMutation.mutate()} disabled={!newAddress || addWhitelistMutation.isPending}
+                  className="bg-accent hover:bg-accent-dark text-dark-900 font-bold px-4 py-2 rounded-lg text-sm transition-all disabled:opacity-40"
+                >
+                  {addWhitelistMutation.isPending ? "Adding..." : "Add to Whitelist"}
+                </button>
+              </div>
+            )}
+
+            {whitelist && whitelist.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-400 text-xs uppercase tracking-wider border-b border-white/5">
+                      <th className="text-left px-3 py-2 font-medium">Address</th>
+                      <th className="text-left px-3 py-2 font-medium">Network</th>
+                      <th className="text-left px-3 py-2 font-medium">Label</th>
+                      <th className="text-left px-3 py-2 font-medium">Status</th>
+                      <th className="text-right px-3 py-2 font-medium">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {whitelist.map((entry: WhitelistEntry) => (
+                      <tr key={entry.id} className="border-b border-white/5 last:border-0">
+                        <td className="px-3 py-2.5 font-mono text-xs text-gray-300">{entry.address.slice(0, 10)}...{entry.address.slice(-6)}</td>
+                        <td className="px-3 py-2.5 text-gray-300">{entry.network}</td>
+                        <td className="px-3 py-2.5 text-gray-300">{entry.label || "—"}</td>
+                        <td className="px-3 py-2.5">
+                          <span className={`text-xs font-semibold ${entry.is_approved ? "text-green-400" : "text-yellow-400"}`}>
+                            {entry.is_approved ? "Approved" : "Pending"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <button onClick={() => deleteWhitelistMutation.mutate(entry.id)} disabled={deleteWhitelistMutation.isPending}
+                            className="text-xs text-red-400 hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No whitelisted addresses yet</p>
+            )}
+          </div>
         </section>
 
         {/* Trading Mode */}

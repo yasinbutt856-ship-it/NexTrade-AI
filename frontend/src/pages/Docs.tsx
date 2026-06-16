@@ -1,0 +1,103 @@
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+const sections = [
+  {
+    title: "Getting Started",
+    icon: "🚀",
+    items: [
+      { q: "What is NexTrade AI?", a: "NexTrade AI is an automated trading bot for MEXC exchange. It runs two bots: an Analyst that scans markets using 8 strategies (RSI, MACD, EMA, Bollinger, Volume, Supertrend, ADX, Ichimoku) and a Trader that executes signals on your account." },
+      { q: "How do I start?", a: "1. Sign up for an account\n2. Go to Settings and add your MEXC API keys (with trading permission, no withdrawal)\n3. Configure your trading mode (paper/live) and type (spot/futures)\n4. Click Start Bot on the Dashboard" },
+      { q: "What plans are available?", a: "Basic ($29/mo) — 1 bot, 3 pairs, spot only, max $500 position\nPro ($79/mo) — 3 bots, 10 pairs, spot+futures, max $5,000\nEnterprise ($199/mo) — unlimited bots, all pairs, spot+futures, unlimited position, API access" },
+    ],
+  },
+  {
+    title: "Trading Concepts",
+    icon: "📈",
+    items: [
+      { q: "What strategies does the Analyst use?", a: "8 strategies: RSI oversold/overbought, MACD crossovers, EMA trend following, volume breakout detection, Bollinger squeeze, Supertrend, ADX trend strength, and Ichimoku cloud." },
+      { q: "What is paper trading?", a: "Paper mode simulates trades with virtual balance. No real money is at risk. Perfect for testing strategies before going live." },
+      { q: "How does risk management work?", a: "Circuit breaker stops trading at 10% drawdown. Daily loss limits and cooldown periods prevent cascade failures. Trailing stop-loss protects profits." },
+    ],
+  },
+  {
+    title: "Accounts & Security",
+    icon: "🔐",
+    items: [
+      { q: "Is my money safe?", a: "We never custody your funds. MEXC API keys are restricted to trading only — no withdrawals possible. All keys encrypted with AES-256 at rest." },
+      { q: "How do I connect my wallet?", a: "Go to Settings > Wallet. Connect MetaMask (EVM) or Phantom (Solana). Used for identity verification and future crypto payments." },
+      { q: "Can I cancel my subscription?", a: "Yes. No lock-in contracts. Cancel anytime from your account settings." },
+    ],
+  },
+  {
+    title: "Technical",
+    icon: "⚙️",
+    items: [
+      { q: "What exchange do you support?", a: "Currently MEXC spot and perpetual futures. More exchanges coming soon." },
+      { q: "What timeframes are analyzed?", a: "15-minute, 1-hour, and 4-hour candles." },
+      { q: "How often are signals generated?", a: "The Analyst scans every minute on configured timeframes. Signals are published to Redis and executed by the Trader in real-time." },
+    ],
+  },
+];
+
+export default function Docs() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-dark-900">
+      {/* Top Nav */}
+      <nav className="border-b border-white/5 bg-dark-900/80 backdrop-blur-xl sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <span className="text-dark-900 font-heading font-bold text-sm">N</span>
+            </div>
+            <span className="font-heading font-bold text-lg tracking-wider hidden sm:block">NexTrade AI</span>
+          </div>
+          <div className="flex items-center gap-1 sm:gap-3 overflow-x-auto scrollbar-none">
+            {user ? (
+              <>
+                <button onClick={() => navigate("/dashboard")} className="text-sm text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Dashboard</button>
+                <button onClick={() => navigate("/settings")} className="text-sm text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Settings</button>
+                <span className="text-sm text-gray-500 hidden sm:block">{user?.email}</span>
+                <button onClick={logout} className="text-sm text-gray-500 hover:text-red-400 px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Logout</button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => navigate("/login")} className="text-sm text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Sign In</button>
+                <button onClick={() => navigate("/signup")} className="text-sm bg-accent hover:bg-accent-dark text-dark-900 px-4 py-1.5 rounded-lg font-bold transition-colors whitespace-nowrap">Get Started</button>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-4xl mx-auto px-6 py-16">
+        <div className="text-center mb-16">
+          <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">Documentation</h1>
+          <p className="text-gray-400 max-w-2xl mx-auto">Everything you need to know about NexTrade AI — from setup to advanced trading concepts.</p>
+        </div>
+
+        <div className="space-y-16">
+          {sections.map((section) => (
+            <div key={section.title}>
+              <div className="flex items-center gap-3 mb-8">
+                <span className="text-2xl">{section.icon}</span>
+                <h2 className="font-heading text-2xl font-bold">{section.title}</h2>
+              </div>
+              <div className="space-y-4">
+                {section.items.map((item) => (
+                  <div key={item.q} className="bg-dark-800/40 border border-white/[0.06] rounded-2xl p-6 hover:border-accent/20 transition-all">
+                    <h3 className="font-heading font-bold text-sm mb-3">{item.q}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-line">{item.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

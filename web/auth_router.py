@@ -1,15 +1,26 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timedelta, timezone
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import init_db, get_session
 from db.models import UserRecord
-from web.auth import hash_password, verify_password, create_access_token, get_current_user
+from web.auth import hash_password, verify_password, create_access_token, get_current_user, generate_verification_token, generate_reset_token
 from shared.plan_limits import get_plan_limits
+from trader.notifier import Notifier
 
 router = APIRouter(prefix="/api/auth")
+
+def _get_notifier() -> Notifier:
+    return Notifier(
+        smtp_host=os.getenv("SMTP_HOST"),
+        smtp_port=int(os.getenv("SMTP_PORT", "587")),
+        smtp_user=os.getenv("SMTP_USER"),
+        smtp_password=os.getenv("SMTP_PASSWORD"),
+        email_from=os.getenv("EMAIL_FROM"),
+    )
 
 
 class RegisterRequest(BaseModel):
@@ -56,15 +67,28 @@ async def register(data: RegisterRequest, session: AsyncSession = Depends(get_se
         raise HTTPException(status_code=400, detail="Email already registered")
     plan = data.plan if data.plan in ("basic", "pro", "enterprise") else "basic"
     limits = get_plan_limits(plan)
+    verification_token = generate_verification_token()
     user = UserRecord(
         email=data.email,
         password_hash=hash_password(data.password),
         plan=plan,
         max_position_usdt=limits["max_position_usdt"],
+        verification_token=verification_token,
+        verification_token_expires=datetime.now(timezone.utc) + timedelta(hours=24),
     )
     session.add(user)
     await session.commit()
     await session.refresh(user)
+    notifier = _get_notifier()
+    verify_link = f"https://mexc-trading-bot.netlify.app/verify-email?token={verification_token}"
+    try:
+        await notifier.send_custom_email(
+            to=user.email,
+            subject="Verify your email - NexTrade AI",
+            body=f"Welcome to NexTrade AI!\n\nPlease verify your email by clicking this link:\n{verify_link}\n\nThis link expires in 24 hours.",
+        )
+    except Exception as e:
+        pass
     token = create_access_token(user.id, user.email, user.is_admin)
     return AuthResponse(
         token=token, email=user.email, is_admin=user.is_admin,
@@ -89,6 +113,68 @@ async def login(data: LoginRequest, session: AsyncSession = Depends(get_session)
         wallet_address=user.wallet_address or "",
         wallet_type=user.wallet_type or "",
     )
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
+@router.get("/verify-email")
+async def verify_email(token: str = Query(...), session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(UserRecord).where(UserRecord.verification_token == token))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+    if user.verification_token_expires and user.verification_token_expires.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Verification token expired")
+    user.email_verified = True
+    user.verification_token = None
+    user.verification_token_expires = None
+    await session.commit()
+    return {"detail": "Email verified successfully"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(UserRecord).where(UserRecord.email == data.email))
+    user = result.scalar_one_or_none()
+    if not user:
+        return {"detail": "If that email exists, a reset link has been sent"}
+    reset_token = generate_reset_token()
+    user.reset_token = reset_token
+    user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+    await session.commit()
+    notifier = _get_notifier()
+    reset_link = f"https://mexc-trading-bot.netlify.app/reset-password?token={reset_token}"
+    try:
+        await notifier.send_custom_email(
+            to=user.email,
+            subject="Reset your password - NexTrade AI",
+            body=f"Reset your password by clicking this link:\n{reset_link}\n\nThis link expires in 1 hour.\n\nIf you did not request this, ignore this email.",
+        )
+    except Exception as e:
+        pass
+    return {"detail": "If that email exists, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, session: AsyncSession = Depends(get_session)):
+    result = await session.execute(select(UserRecord).where(UserRecord.reset_token == data.token))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    if user.reset_token_expires and user.reset_token_expires.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Reset token expired")
+    user.password_hash = hash_password(data.new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    await session.commit()
+    return {"detail": "Password reset successfully"}
 
 
 @router.get("/me")

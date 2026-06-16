@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Boolean, Column, String, Float, DateTime, Enum, JSON, Integer
+from sqlalchemy import Boolean, Column, String, Float, DateTime, Enum, JSON, Integer, BigInteger
 from sqlalchemy.orm import DeclarativeBase
 import enum
 
@@ -111,5 +111,24 @@ class UserRecord(Base):
     max_position_usdt = Column(Float, default=500.0)
     wallet_address = Column(String(255), nullable=True, index=True)
     wallet_type = Column(String(10), nullable=True)  # "evm" | "solana"
+    withdrawal_delay_hours = Column(Integer, default=24)
+    email_verified = Column(Boolean, default=False)
+    verification_token = Column(String(255), nullable=True)
+    verification_token_expires = Column(DateTime, nullable=True)
+    reset_token = Column(String(255), nullable=True)
+    reset_token_expires = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
+
+
+class WithdrawalWhitelistRecord(Base):
+    __tablename__ = "withdrawal_whitelist"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    address = Column(String(255), nullable=False)
+    network = Column(String(50), nullable=False)
+    label = Column(String(100), nullable=True)
+    is_approved = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    approved_at = Column(DateTime, nullable=True)

@@ -1,4 +1,5 @@
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import bcrypt
@@ -24,6 +25,14 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
+
+
+def generate_verification_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def generate_reset_token() -> str:
+    return secrets.token_urlsafe(32)
 
 
 def create_access_token(user_id: int, email: str, is_admin: bool = False) -> str:

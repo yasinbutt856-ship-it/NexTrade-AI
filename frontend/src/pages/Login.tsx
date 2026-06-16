@@ -62,6 +62,9 @@ export default function Login() {
               className="w-full bg-dark-800 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
               placeholder="••••••••" required
             />
+            <div className="flex justify-end mt-1.5">
+              <Link to="/forgot-password" className="text-xs text-gray-500 hover:text-accent transition-colors">Forgot password?</Link>
+            </div>
           </div>
 
           <button

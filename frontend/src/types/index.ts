@@ -92,6 +92,7 @@ export interface UserProfile {
   has_mexc_keys: boolean;
   wallet_address?: string;
   wallet_type?: string;
+  withdrawal_delay_hours?: number;
 }
 
 export interface UserSettings {
@@ -120,6 +121,20 @@ export interface BotLogEntry {
   message: string;
   timestamp: string;
   [key: string]: unknown;
+}
+
+export interface WhitelistEntry {
+  id: number;
+  address: string;
+  network: string;
+  label: string;
+  is_approved: boolean;
+  created_at: string;
+}
+
+export interface AdminPendingApproval extends WhitelistEntry {
+  user_email: string;
+  user_id: number;
 }
 
 export interface AdminUser {

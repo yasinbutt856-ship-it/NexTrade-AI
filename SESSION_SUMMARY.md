@@ -8,7 +8,7 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - **Frontend**: React 19, Vite 8, Tailwind v4, Recharts, ethers, @solana/web3.js
 - **Infra**: Railway (backend + bots + DB + Redis), Netlify (frontend), GitHub
 
-## Done
+## Done (Expanded)
 - **Analyst/Trader DEAD fixed**: `lpush` for signals, 15s heartbeat caches, status endpoint reads `settings.yaml` mode correctly
 - **JWT auth**: bcrypt hash/verify, JWT create/decode (HS256, 24h), register/login/me with Bearer middleware
 - **Admin seed**: `abeermeer7979@gmail.com` / `Abeer@123` (enterprise, is_admin) on startup
@@ -44,10 +44,26 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - SIWE for wallet ownership verification (ECDSA for EVM, ed25519 for Solana)
 - No Stripe/PayPal yet — signup free for all plans, wallet ready for future crypto payments
 
-## Next Steps
-1. Stripe/PayPal payment integration + plan upgrade/downgrade
-2. Email verification + password reset (SMTP, tokens, reset flow)
-3. Withdrawal protection (whitelist, confirmation delays, admin approval)
+## Completed This Session
+- **Docs page** (`/docs`): 4-section help page (Getting Started, Trading Concepts, Accounts & Security, Technical) — FAQ-style Q&A, works for logged-in and anonymous users
+- **Email verification + password reset**:
+  - DB: `email_verified`, `verification_token`, `verification_token_expires`, `reset_token`, `reset_token_expires` on UserRecord
+  - Backend: register sends verification email; GET /verify-email, POST /forgot-password, POST /reset-password endpoints
+  - Notifier: added `send_custom_email(to, subject, body)` for per-user emails
+  - Frontend: VerifyEmail, ForgotPassword, ResetPassword pages; "Forgot password?" link on Login
+- **WebSocket real-time updates**:
+  - Backend: `/ws` endpoint with JWT auth (token query param), pushes status/signals/positions/performance/logs every 2s
+  - Frontend: `useWebSocket` hook with exponential backoff reconnection (1s→2s→4s→...→30s max)
+  - Dashboard updated via react-query cache; REST polling as fallback (10s interval)
+- **Withdrawal protection**:
+  - DB: `WithdrawalWhitelistRecord` table + `withdrawal_delay_hours` on UserRecord
+  - Backend: `withdrawal_router.py` — 7 endpoints (whitelist CRUD, settings, admin approve/pending)
+  - Frontend: Settings page "Withdrawal Protection" section (add/delete addresses, delay setting); Admin page approval table
+- **64 tests still passing**, frontend builds clean
+
+## Remaining
+1. Stripe/PayPal payment integration + checkout flow
+2. Multi-exchange support (Binance, Bybit, etc.)
 
 ## Critical Context
 - Backend: `https://mexc-trading-bot-production-c215.up.railway.app/health`
