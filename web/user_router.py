@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_session
 from db.models import UserRecord, BotModeDB, TradeTypeDB
 from web.auth import get_current_user, get_admin_user
-from shared.encryption import encrypt, decrypt
+from shared.encryption import encrypt
 from shared.plan_limits import get_plan_limits, enforce_plan_limit
 from shared.redis_client import RedisClient
 from shared.wallet import make_nonce, build_siwe_message, verify_wallet_signature
@@ -18,11 +18,6 @@ class ExchangeKeysRequest(BaseModel):
     api_key: str
     api_secret: str
     exchange: str = "mexc"
-
-
-class MexcKeysRequest(BaseModel):
-    api_key: str
-    api_secret: str
 
 
 class UserSettingsRequest(BaseModel):
@@ -83,70 +78,6 @@ async def update_exchange_keys(
         "spot_ok": validation["spot_ok"],
         "futures_ok": validation["futures_ok"],
         "message": f"{exchange_name.upper()} API keys saved and verified",
-    }
-
-
-@router.put("/mexc-keys")
-async def update_mexc_keys(
-    data: MexcKeysRequest,
-    user: UserRecord = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
-):
-    client = create_exchange(api_key=data.api_key, api_secret=data.api_secret, exchange_name="mexc", use_sandbox=False)
-    try:
-        validation = await client.validate_credentials()
-        await client.close()
-    except Exception as e:
-        await client.close()
-        raise HTTPException(status_code=503, detail=f"Cannot validate MEXC keys: {str(e)}")
-
-    if not validation["spot_ok"] and not validation["futures_ok"]:
-        raise HTTPException(
-            status_code=400,
-            detail="MEXC API key verification failed. Check your key and secret at mexc.com. "
-                   "Ensure Spot & Margin Trading and Read-only permissions are enabled."
-        )
-
-    user.exchange = ExchangeDB.mexc
-    user.mexc_api_key = encrypt(data.api_key)
-    user.mexc_api_secret = encrypt(data.api_secret)
-    user.mexc_keys_verified = True
-    await session.commit()
-    return {
-        "success": True,
-        "exchange": "mexc",
-        "keys_verified": True,
-        "spot_ok": validation["spot_ok"],
-        "futures_ok": validation["futures_ok"],
-        "message": "MEXC API keys saved and verified",
-    }
-
-
-@router.get("/exchange-keys")
-async def get_exchange_keys(user: UserRecord = Depends(get_current_user)):
-    exchange_name = user.exchange.value if hasattr(user.exchange, 'value') else (user.exchange or "mexc")
-    if not user.mexc_api_key:
-        return {"api_key": "", "api_secret": "", "exchange": exchange_name, "has_keys": False, "keys_verified": False}
-    return {
-        "api_key": decrypt(user.mexc_api_key),
-        "api_secret": decrypt(user.mexc_api_secret),
-        "exchange": exchange_name,
-        "has_keys": True,
-        "keys_verified": user.mexc_keys_verified or False,
-    }
-
-
-@router.get("/mexc-keys")
-async def get_mexc_keys(user: UserRecord = Depends(get_current_user)):
-    exchange_name = user.exchange.value if hasattr(user.exchange, 'value') else (user.exchange or "mexc")
-    if not user.mexc_api_key:
-        return {"api_key": "", "api_secret": "", "exchange": exchange_name, "has_keys": False, "keys_verified": False}
-    return {
-        "api_key": decrypt(user.mexc_api_key),
-        "api_secret": decrypt(user.mexc_api_secret),
-        "exchange": exchange_name,
-        "has_keys": True,
-        "keys_verified": user.mexc_keys_verified or False,
     }
 
 

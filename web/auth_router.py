@@ -58,6 +58,7 @@ class UserResponse(BaseModel):
     bot_active: bool
     max_position_usdt: float
     has_api_keys: bool
+    keys_verified: bool = False
     wallet_address: str = ""
     wallet_type: str = ""
 
@@ -200,12 +201,10 @@ async def get_me(user: UserRecord = Depends(get_current_user)):
         plan=user.plan.value, mode=user.mode.value, trade_type=user.trade_type.value,
         exchange=exchange, bot_active=user.bot_active, max_position_usdt=user.max_position_usdt,
         has_api_keys=bool(user.mexc_api_key and user.mexc_api_secret),
+        keys_verified=bool(user.mexc_keys_verified),
         wallet_address=user.wallet_address or "",
         wallet_type=user.wallet_type or "",
     )
-
-
-async def seed_admin():
     await init_db()
     from db.database import async_session_factory
     async with async_session_factory() as session:

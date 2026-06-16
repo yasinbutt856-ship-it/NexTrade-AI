@@ -62,13 +62,7 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ api_key, api_secret, exchange }),
     }),
-  getExchangeKeys: () => request<import("../types").ExchangeKeys>("/api/user/exchange-keys"),
-  updateMexcKeys: (api_key: string, api_secret: string) =>
-    request<import("../types").ExchangeKeysSaveResponse>("/api/user/mexc-keys", {
-      method: "PUT",
-      body: JSON.stringify({ api_key, api_secret }),
-    }),
-  getMexcKeys: () => request<import("../types").ExchangeKeys>("/api/user/mexc-keys"),
+
   updateSettings: (data: import("../types").UserSettings) =>
     request<{ success: boolean; mode: string; trade_type: string }>("/api/user/settings", {
       method: "PUT",

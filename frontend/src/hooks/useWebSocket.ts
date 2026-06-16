@@ -38,7 +38,12 @@ export function useWebSocket(onMessage: (msg: WSMessage) => void) {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      if (event.code === 4001) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
       const delay = Math.min(1000 * Math.pow(2, attemptRef.current), 30000);
       attemptRef.current += 1;
       reconnectTimerRef.current = setTimeout(connect, delay);

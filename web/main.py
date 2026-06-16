@@ -11,7 +11,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from db.database import init_db, close_db, async_session_factory
 from db.models import PositionRecord, TradeRecord, OrderStatusDB
 from web.routers import router
-from web.auth_router import router as auth_router, seed_admin
+from web.auth_router import router as auth_router
+from scripts.seed_admin import seed_admin
 from web.user_router import router as user_router
 from web.wallet_router import router as wallet_router
 from web.withdrawal_router import router as withdrawal_router

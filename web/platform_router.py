@@ -197,6 +197,16 @@ async def delete_user_data(
 ):
     user = await _get_db_user(token, session)
 
+    user.bot_active = False
+    try:
+        from shared.redis_client import RedisClient
+        rc = RedisClient()
+        await rc.connect()
+        await rc.publish("bot:control", {"user_id": user.id, "action": "stop"})
+        await rc.disconnect()
+    except Exception:
+        pass
+
     await session.execute(TradeRecord.__table__.delete().where(TradeRecord.user_id == user.id))
     await session.execute(PositionRecord.__table__.delete().where(PositionRecord.user_id == user.id))
     await session.execute(SignalRecord.__table__.delete().where(SignalRecord.user_id == user.id))
@@ -207,7 +217,6 @@ async def delete_user_data(
     user.mexc_api_key = None
     user.mexc_api_secret = None
     user.wallet_address = None
-    user.bot_active = False
 
     await session.commit()
     return {"detail": "All personal data deleted. Account anonymized."}

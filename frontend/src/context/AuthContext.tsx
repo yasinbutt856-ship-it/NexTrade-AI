@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: 0, email: res.email, is_admin: res.is_admin,
       plan: res.plan, mode: res.mode, trade_type: res.trade_type,
       exchange: res.exchange || "mexc",
-      bot_active: res.bot_active, max_position_usdt: 500, has_api_keys: false,
+      bot_active: res.bot_active, max_position_usdt: 500, has_api_keys: false, keys_verified: false,
     });
   };
 
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: 0, email: res.email, is_admin: res.is_admin,
       plan: res.plan, mode: res.mode, trade_type: res.trade_type,
       exchange: res.exchange || "mexc",
-      bot_active: res.bot_active, max_position_usdt: 500, has_api_keys: false,
+      bot_active: res.bot_active, max_position_usdt: 500, has_api_keys: false, keys_verified: false,
     });
   };
 

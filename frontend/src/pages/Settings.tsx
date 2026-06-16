@@ -18,7 +18,7 @@ export default function Settings() {
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [keysSaved, setKeysSaved] = useState(false);
-  const [keysVerified, setKeysVerified] = useState(false);
+  const [keysVerified, setKeysVerified] = useState(user?.keys_verified ?? false);
   const [spotOk, setSpotOk] = useState(false);
   const [futuresOk, setFuturesOk] = useState(false);
   const [maxPos, setMaxPos] = useState(user?.max_position_usdt || 500);
@@ -33,20 +33,6 @@ export default function Settings() {
   const [notifPush, setNotifPush] = useState(false);
   const [newApiKeyName, setNewApiKeyName] = useState("");
   const [generatedKey, setGeneratedKey] = useState("");
-
-  const { data: existingKeys } = useQuery({
-    queryKey: ["exchangeKeys"],
-    queryFn: api.getExchangeKeys,
-  });
-
-  useEffect(() => {
-    if (existingKeys?.has_keys) {
-      setExchange(existingKeys.exchange || "mexc");
-      setApiKey(existingKeys.api_key);
-      setApiSecret(existingKeys.api_secret);
-      setKeysVerified(existingKeys.keys_verified ?? false);
-    }
-  }, [existingKeys]);
 
   const saveKeys = useMutation({
     mutationFn: () => api.updateExchangeKeys(apiKey, apiSecret, exchange),

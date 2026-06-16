@@ -98,13 +98,13 @@ export default function StatusPage() {
             <h2 className="font-heading font-bold text-lg mb-4">SLA Commitment</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
-                { plan: "Basic", sla: "99.5%", response: "48h" },
-                { plan: "Pro", sla: "99.5%", response: "24h" },
-                { plan: "Enterprise", sla: "99.9%", response: "4h" },
+                { plan: "Basic", sla: "Best-effort", response: "48h" },
+                { plan: "Pro", sla: "Best-effort", response: "24h" },
+                { plan: "Enterprise", sla: "Best-effort", response: "4h" },
               ].map((tier) => (
                 <div key={tier.plan} className="bg-dark-900/50 border border-white/[0.04] rounded-xl p-4 text-center">
                   <div className="text-accent font-heading font-bold text-lg">{tier.sla}</div>
-                  <div className="text-sm text-gray-400">uptime</div>
+                  <div className="text-sm text-gray-400">uptime commitment</div>
                   <div className="text-xs text-gray-500 mt-1">{tier.plan} — {tier.response} response</div>
                 </div>
               ))}

@@ -99,6 +99,7 @@ export interface UserProfile {
   bot_active: boolean;
   max_position_usdt: number;
   has_api_keys: boolean;
+  keys_verified: boolean;
   wallet_address?: string;
   wallet_type?: string;
   withdrawal_delay_hours?: number;

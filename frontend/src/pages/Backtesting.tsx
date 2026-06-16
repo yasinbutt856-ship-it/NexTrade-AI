@@ -33,7 +33,8 @@ export default function Backtesting() {
       const res = await api.runBacktest({ pair, strategy, days });
       setResult(res);
     } catch (e: any) {
-      setResult({ status: "error", message: e?.detail || e?.message || "Backtest failed" });
+      const msg = typeof e === "string" ? e : e?.detail ? (typeof e.detail === "string" ? e.detail : String(e.detail)) : e?.message || "Backtest failed";
+      setResult({ status: "error", message: msg });
     } finally {
       setRunning(false);
     }

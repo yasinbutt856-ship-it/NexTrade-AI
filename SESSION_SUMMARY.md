@@ -12,74 +12,51 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - **Analyst/Trader DEAD fixed**: `lpush` for signals, 15s heartbeat caches, status endpoint reads `settings.yaml` mode correctly
 - **JWT auth**: bcrypt hash/verify, JWT create/decode (HS256, 24h), register/login/me with Bearer middleware
 - **Admin seed**: `abeermeer7979@gmail.com` / `Abeer@123` (enterprise, is_admin) on startup
-- **MEXC key mgmt**: Fernet AES-256 encrypt/decrypt via `shared/encryption.py`, PUT/GET endpoints
+- **Exchange key mgmt**: Fernet AES-256 encrypt via `shared/encryption.py`, PUT endpoint only (no GET — keys never returned to client)
 - **User settings API**: paper/live, spot/futures, max_position, bot start/stop via Redis pub/sub `bot:control`
-- **Admin user list**: GET /api/user/admin/users — all users with plan/mode/bot_active/MEXC status
+- **Admin user list**: GET /api/user/admin/users — all users with plan/mode/bot_active/key status
 - **Full frontend**: 22 pages — Landing, Login, Signup, VerifyEmail, ForgotPassword, ResetPassword, Dashboard, Settings, Admin, AdminAnalytics, Positions, Signals, Trades, StrategyPerformance, Backtesting, Status, Docs, Terms, Privacy, Whitepaper, About, Changelog, Security — all dark themed with code splitting
-- **Multi-tenant trader**: per-user UserSession with PaperEngine/RiskManager/PositionTracker/MEXCClient, signal execution per user_id
+- **Multi-tenant trader**: per-user UserSession with PaperEngine/RiskManager/PositionTracker/exchange clients, signal execution per user_id
 - **Wallet (EVM + Solana)**: SIWE nonce, eth_account recover, nacl verify; endpoints + WalletContext + WalletConnect (MetaMask + Phantom)
 - **Plan enforcement**: `shared/plan_limits.py` — tier limits + usage caps + trial enforcement
-- **18 revenue-ready features**: strategy perf, portfolio, CSV export, backtesting UI, custom pairs, notification prefs, user API keys, admin analytics, trial status, usage tracking, GDPR export/delete
+- **18+ revenue-ready features**: strategy perf, portfolio, CSV export, backtesting UI, custom pairs, notification prefs, user API keys, admin analytics, trial status, usage tracking, GDPR export/delete
 - **Platform depth**: code splitting (336KB max), dark/light mode, toast notifications, loading skeletons, error boundaries, sortable tables, WebSocket real-time
 - **7 trust pages**: Terms, Privacy, Whitepaper, Security, Changelog, About, Status — plus company footer, support email, SLA commitment
 - **64 backend tests passing**, frontend test setup (vitest + testing-library)
-- **README**: fully updated with all 50+ API endpoints, full project structure, all features
+- **README**: fully updated with all API endpoints, full project structure, all features
 
-## Completed This Session (18-Item Overhaul)
+## Completed This Session (Jun 17 — Security + Quality Pass)
 
-### 🔴 Critical
-1. **MEXC API key validation** — Implemented `validate_credentials()` in `MEXCClient` that calls `fetch_balance()` on spot + futures. `PUT /api/user/mexc-keys` now validates before saving (rejects fake keys with 400). `POST /api/user/bot` blocks live start if unverified. `UserSession.__init__` calls `validate_exchange()` on session creation. Frontend shows "Verifying with MEXC..." → ✅ status badges per spot/futures. (7 files changed)
+### 🔴 Security
+1. **Decrypted key GET endpoints removed** — `GET /api/user/exchange-keys` and `GET /api/user/mexc-keys` deleted from `user_router.py`. Keys are no longer returned to the frontend (prevents XSS/leak). Frontend Settings form starts empty each visit. Key status shown via `keys_verified` in `/api/auth/me` response.
+2. **Duplicate PUT /mexc-keys removed** — `PUT /api/user/mexc-keys` consolidated into `PUT /api/user/exchange-keys` which handles all exchanges (MEXC/Binance/Bybit) via the `exchange` field. `MexcKeysRequest` model removed. `updateMexcKeys`/`getMexcKeys` removed from frontend API client.
+3. **WebSocket token expiry** — Server closes with code 4001 on auth failure. Client `useWebSocket` hook now checks `event.code`; if 4001, clears token and redirects to `/login` instead of infinite reconnect loop.
 
-### 🟡 Blocked (skipped)
-2. Custom domain — no domain purchased yet
-3. Stripe/PayPal — no Stripe account yet
-14. Subscription management UI — depends on Stripe
+### 🟠 Performance
+4. **Backtest event loop fix** — `yfinance.Ticker.history()` calls in `Backtester.fetch_data()` now run via `loop.run_in_executor()` so they don't block the async event loop. `fetch_data` changed from sync to `async def`.
 
-### 🟠 Implemented
-4. **Usage-based enforcement** — Added `max_api_calls_per_day`, `max_bot_hours_per_month`, `max_trade_volume_per_month` to `PLAN_LIMITS` per tier. Added `enforce_usage_limit()` and `get_usage_limits()` functions.
-5. **CI/CD pipeline** — Created `.github/workflows/test.yml` (backend tests + frontend build on push/PR) and `.github/workflows/deploy.yml` (auto-deploy frontend to Netlify from GitHub Actions).
-6. **Frontend tests** — Installed vitest + @testing-library/react + jsdom. Created `__tests__/setup.ts` and `App.test.tsx` basic smoke test. Added `test` script to package.json. Vite config now uses `vitest/config`.
-7. **Plan enforcement in trader** — Added `plan` field to `UserSession`, imports plan limits from `plan_limits.py`. `_execute_for_user` now checks `spot_only` and `max_pairs` before trading. RiskManager draws `max_position_size_usdt` from user's plan.
-8. **Email templates** — Created `trader/templates/` with 4 branded HTML templates (dark theme): `verify_email.html`, `reset_password.html`, `welcome.html`, `trade_notification.html`. Updated `Notifier.send_custom_email()` to support multi-part (plain + HTML). Auth router now sends HTML verification, reset, and welcome emails.
-9. **netlify.toml** — Created `frontend/netlify.toml` with build command, publish directory, and SPA redirect rules (replaces `public/_redirects`).
-10. **Onboarding email** — Registration now sends branded "Welcome to NexTrade AI - Getting Started" email with setup steps (get MEXC keys → connect in Settings → start paper trading).
-11. **Status page** — Created `/status` page at `frontend/src/pages/Status.tsx` with live service checks (health endpoint, analyst/trader alive), uptime display, latency per service, SLA commitment table (Basic/Pro/Enterprise). Added to App.tsx routes and footer links.
-12. **Error handling** — Fixed silent `catch(() => {})` in StrategyPerformance and AdminAnalytics pages — now shows error toasts via `useToast()`.
+### 🟡 Reliability
+5. **GDPR deletion** — `DELETE /api/user/data-delete` now stops the bot (sets `bot_active=False`, publishes `bot:control` stop via Redis) before deleting records and anonymizing user.
+6. **Admin seed moved** — `seed_admin()` function extracted from `auth_router.py` to `scripts/seed_admin.py`. Imported in `main.py` from new location.
+7. **SLA claim softened** — Changed from "99.5% uptime" to "Best-effort uptime" in both README and Status.tsx to avoid legal exposure.
 
-### ✅ Completed (backlog cleared)
-13. **Backtesting engine** — Wired `POST /api/backtest` to real `Backtester.run()`. Loads `settings.yaml` + `strategies.yaml` via `ConfigLoader`, maps strategy to timeframe, runs async historical fetch + strategy execution + metric calculation. Returns `{total_pnl, total_pnl_pct, win_rate, max_drawdown_pct, sharpe_ratio, equity_curve[], trades[]}`. (2 files: `platform_router.py:427-448`)
-14. **Backtesting frontend** — Full result display: 8 metric cards (P&L, return %, win rate, max DD, total trades, Sharpe, final balance, period), interactive equity curve chart via Recharts `AreaChart`, sortable trade table with Badge for buy/sell actions. Added `BacktestResult` type. (3 files: `Backtesting.tsx`, `types/index.ts`, `api/client.ts`)
-15. **README** — Fully rewritten with all 50+ API endpoints, project structure, feature list, stack details, setup instructions. (1 file: `README.md`)
+### 📝 Documentation
+8. **README fixes** — Architecture diagram updated ("Encrypted MEXC key storage" → "Encrypted exchange key storage"). `GET /api/auth/me` moved from Public to User Endpoints (requires auth). `user_router.py` description updated ("MEXC keys" → "exchange keys"). Removed stale `(18 endpoints)` count from `platform_router.py` description.
 
-### ✅ Completed This Session
-- **Multi-exchange (Binance + Bybit)** — Created `BaseExchangeClient` ABC in `trader/exchange/base.py`. Created `BinanceClient` and `BybitClient` extending it. Added `ExchangeDB` enum + `exchange` column to `UserRecord`. Created `create_exchange()` factory. Updated `UserSession` to use factory. Added `PUT /api/user/exchange-keys` + `GET /api/user/exchange-keys` endpoints. Updated frontend Settings page with exchange selector dropdown. Updated auth responses, bot status, admin list all to include exchange field. (12 files)
-
-### ✅ Completed
-- **Mobile polish** — Comprehensive audit + fixes: Landing page navbar now has hamburger menu with full link list (`hidden md:flex`). Touch targets increased across all pages (navbar buttons `p-1`→`p-2.5`, logout `py-1.5`→`py-2.5`, WalletConnect `px-3 py-1.5 text-xs`→`px-4 py-2.5 text-sm`, delete buttons `px-3 py-1.5`). Table columns hidden on mobile via `className: "hidden md:table-cell"` for Admin (ID, Type, Exchange, Keys), Trades (Qty, Total, Fee), Positions (Entry, Current), Signals (Price, Timeframe, Strategies). Toast container centered on mobile (`left-4`). Added `touch-action: manipulation` and `-webkit-tap-highlight-color: transparent` to global CSS. (10 files)
-
-### ✅ Completed
-- **Docker Desktop** — Docker CLI 29.5.3 available, daemon was stopped. Started Docker Desktop 4.77.0. Created `.env` with mock keys. Fixed `docker-compose.override.yml` (`web` → `backend` service name mismatch). Built backend image (pip install 100+ deps, 130s). Started redis + backend containers. Verified health endpoint returns `{"status":"ok"}`. Cleaned up containers. (2 files: `.env`, `docker-compose.override.yml`)
-
-### ✅ Completed (This Session — Jun 17)
-- **Multi-exchange (Binance + Bybit)** — `BaseExchangeClient` ABC, `BinanceClient`/`BybitClient`, factory pattern, exchange selector in Settings (12 files)
-- **MEXC API key validation** — `validate_credentials()` on save, blocks live start, frontend badges (7 files)
-- **Usage-based enforcement** — `max_api_calls_per_day`, `max_bot_hours_per_month`, `max_trade_volume_per_month` with `enforce_usage_limit()`
-- **CI/CD pipeline** — GitHub Actions `test.yml` + `deploy.yml` (Netlify auto-deploy)
-- **Frontend tests** — vitest + @testing-library/react setup, smoke test
-- **Plan enforcement in trader** — `UserSession` carries plan, checks `spot_only`/`max_pairs`, `RiskManager` uses plan limits
-- **4 HTML email templates** — verify, reset, welcome, trade notification (dark theme)
-- **netlify.toml** — build config + SPA redirects
-- **Onboarding email** — Welcome with MEXC setup steps on registration
-- **Status page** — `/status` with live service checks, uptime, latency, SLA table
-- **Error handling** — Fixed silent `catch(() => {})` → error toasts
-- **Backtesting engine wired** — `POST /api/backtest` → real `Backtester.run()`, full result set
-- **Backtesting frontend** — 8 metric cards, equity curve chart, sortable trade table
-- **README** — Rewritten with all 50+ API endpoints, full project structure
-- **Mobile polish** — Hamburger menu, touch targets, responsive columns, toast centering
-- **Docker Desktop** — Started daemon, built backend image, verified health
-- **Triple-platform deploy** — Committed + pushed to GitHub (`730281b`), deployed frontend to Netlify (build + live), deployed backend to Railway (all 3 services online). Fixed `Badge` variant `info`→`success` in Backtesting TSX.
-- **README + GitHub metadata update** — Updated README for multi-exchange (MEXC/Binance/Bybit): overview, architecture, features, API endpoints, project structure, prerequisites. Updated GitHub description and added `binance`, `bybit`, `multi-exchange` topics. Pushed `0a5fabf`.
-- **Frontend test fixes** — Fixed `Router-in-Router` error (removed extra BrowserRouter wrapper), fixed lazy-loaded landing page test (`findByText` → `findAllByText`), added IntersectionObserver polyfill for jsdom. Pushed `79a8d2e`.
+### ✅ Files Changed (15)
+- `web/user_router.py` — Removed 3 endpoints + MexcKeysRequest + unused `decrypt` import
+- `web/auth_router.py` — Added `keys_verified` to UserResponse, removed seed_admin function
+- `web/main.py` — Import seed_admin from scripts/seed_admin.py
+- `web/platform_router.py` — GDPR now stops bot before deleting
+- `backtest/backtester.py` — fetch_data async, yfinance in run_in_executor
+- `scripts/seed_admin.py` — New file, extracted from auth_router
+- `frontend/src/api/client.ts` — Removed getExchangeKeys, updateMexcKeys, getMexcKeys
+- `frontend/src/types/index.ts` — Added keys_verified to UserProfile
+- `frontend/src/context/AuthContext.tsx` — Added keys_verified to initial user state
+- `frontend/src/pages/Settings.tsx` — Removed existingKeys query/effect, initializes from user.keys_verified
+- `frontend/src/pages/Status.tsx` — SLA: Best-effort instead of 99.5%
+- `frontend/src/hooks/useWebSocket.ts` — Close code 4001 → redirect to login
+- `README.md` — 5 fixes (SLA, diagram, /me placement, descriptions)
 
 ## Remaining
 1. Custom domain (once purchased)
@@ -96,7 +73,9 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - Nullable `user_id` on Signal/Position/Trade so existing data survives
 - ethers + @solana/web3.js direct (not wagmi/Web3Modal) to avoid massive dep tree
 - SIWE for wallet ownership verification (ECDSA for EVM, ed25519 for Solana)
-- MEXC key validation via `validate_credentials()` on save — catches fake keys immediately
+- Keys never returned to client — prevents XSS/leak, Settings form starts empty
+- WebSocket code 4001 redirects to login — prevents reconnect loop on expired token
+- Best-effort SLA — avoids legal commitment on single-instance Railway deployment
 
 ## Critical Context
 - Backend: `https://mexc-trading-bot-production-c215.up.railway.app/health`
@@ -104,8 +83,9 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - Analyst alive, trader alive, mode: live
 - Railway services: mexc-trading-bot (FastAPI), analyst (signal gen), trader (multi-tenant executor)
 - 8 strategies: RSI, MACD cross, EMA trend, volume breakout, Bollinger squeeze, Supertrend, ADX, Ichimoku
-- MEXC API keys are now validated on save — fake keys rejected with 400 error
-- Live bot start blocked if MEXC keys not verified
+- Exchange API keys validated on save — fake keys rejected with 400 error
+- Keys NOT returned via any GET endpoint (security)
+- Live bot start blocked if keys not verified
 - 22 frontend pages, all code-split (largest chunk 336KB)
 - CI/CD ready: GitHub Actions test + deploy workflows
 - Email templates: 4 branded HTML templates for verification, reset, welcome, trade alerts

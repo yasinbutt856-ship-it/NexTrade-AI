@@ -27,7 +27,7 @@ NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC
 │                   Backend (Railway)                       │
 │  FastAPI + SQLAlchemy async + Redis pub/sub               │
 │  JWT auth · Plan enforcement · Rate limiting              │
-│  Encrypted MEXC key storage (Fernet AES-256)              │
+│  Encrypted exchange key storage (Fernet AES-256)          │
 └──────┬──────────────────────────────┬───────────────────┘
        │ Redis pub/sub                │ Redis pub/sub
 ┌──────▼──────────┐          ┌───────▼───────────────────┐
@@ -116,7 +116,7 @@ NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC
 - **About** (`/about`): Company info, development timeline, team, architecture overview
 - **Support**: Email link (support@nextrade.ai) in navbar and footer
 - **Company footer**: Registered company name, jurisdiction, contact info on all pages
-- **SLA commitment**: 99.5% uptime across all plans
+- **SLA commitment**: Best-effort uptime across all plans
 
 ## Subscription Plans
 
@@ -207,7 +207,6 @@ The backend exposes a REST API at `/api/*`. All authenticated endpoints require 
 | GET | `/health` | Health check |
 | POST | `/api/auth/register` | Register new user |
 | POST | `/api/auth/login` | Login, returns JWT |
-| GET | `/api/auth/me` | Current user profile |
 | POST | `/api/auth/wallet-nonce` | Get SIWE message to sign (for wallet auth) |
 | POST | `/api/auth/wallet-login` | Sign in with crypto wallet (EVM/Solana) |
 | POST | `/api/auth/wallet-link` | Link wallet to existing email account |
@@ -231,10 +230,8 @@ The backend exposes a REST API at `/api/*`. All authenticated endpoints require 
 | GET | `/api/positions/export` | CSV export — positions |
 | POST | `/api/backtest` | Run backtest simulation |
 | WS | `/ws` | WebSocket real-time updates (JWT auth) |
-| PUT | `/api/user/mexc-keys` | Save encrypted MEXC keys |
-| GET | `/api/user/mexc-keys` | Decrypt & return MEXC keys |
+| GET | `/api/auth/me` | Current user profile (authenticated) |
 | PUT | `/api/user/exchange-keys` | Save & validate keys for any exchange (MEXC/Binance/Bybit) |
-| GET | `/api/user/exchange-keys` | Get stored exchange keys |
 | PUT | `/api/user/settings` | Update mode, trade type, position limit |
 | POST | `/api/user/bot` | Start/stop bot via Redis pub/sub |
 | GET | `/api/user/bot/status` | Bot configuration status |
@@ -310,8 +307,8 @@ The backend exposes a REST API at `/api/*`. All authenticated endpoints require 
 │   ├── auth_router.py       # Register/login/me/verify/reset + admin seed
 │   ├── wallet_router.py     # Wallet auth (nonce, login, link)
 │   ├── withdrawal_router.py # Withdrawal whitelist CRUD + admin approval
-│   ├── user_router.py       # User settings, MEXC keys, bot control, admin
-│   ├── platform_router.py   # Strategy perf, portfolio, CSV, GDPR, pairs, notifs, API keys, analytics, trial, backtest, usage (18 endpoints)
+│   ├── user_router.py       # User settings, exchange keys, bot control, admin
+│   ├── platform_router.py   # Strategy perf, portfolio, CSV, GDPR, pairs, notifs, API keys, analytics, trial, backtest, usage
 │   └── routers.py           # Status, signals, positions, trades, logs, stats
 ├── docker-compose.yml       # Local dev setup
 ├── Dockerfile.web            # Backend container

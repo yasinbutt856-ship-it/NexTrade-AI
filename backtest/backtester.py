@@ -27,15 +27,16 @@ class Backtester:
         self.strategy_runner = StrategyRunner(strategies_config)
         self.signal_aggregator = SignalAggregator(strategies_config)
 
-    def fetch_data(self, symbol: str, timeframe: str = "1h", period: str = "3mo") -> pd.DataFrame:
+    async def fetch_data(self, symbol: str, timeframe: str = "1h", period: str = "3mo") -> pd.DataFrame:
         yf_symbol = symbol.replace("/", "-").replace("USDT", "-USD")
         logger.info("backtest_fetching", symbol=yf_symbol, timeframe=timeframe, period=period)
+        loop = asyncio.get_running_loop()
         ticker = yf.Ticker(yf_symbol)
-        df = ticker.history(period=period, interval=timeframe)
+        df = await loop.run_in_executor(None, lambda: ticker.history(period=period, interval=timeframe))
         if df.empty:
             yf_symbol_alt = symbol.replace("/", "") + "-USD"
             ticker = yf.Ticker(yf_symbol_alt)
-            df = ticker.history(period=period, interval=timeframe)
+            df = await loop.run_in_executor(None, lambda: ticker.history(period=period, interval=timeframe))
         if df.empty:
             raise ValueError(f"No data for {symbol} via yfinance")
         df.rename(
@@ -55,7 +56,7 @@ class Backtester:
         period: str = "3mo",
         initial_balance: float = 10000.0,
     ) -> dict:
-        df = self.fetch_data(symbol, timeframe, period)
+        df = await self.fetch_data(symbol, timeframe, period)
         engine = PaperEngine(initial_balance_usdt=initial_balance)
         tracker = PositionTracker()
 
