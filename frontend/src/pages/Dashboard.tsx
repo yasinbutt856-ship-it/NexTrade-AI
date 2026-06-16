@@ -7,6 +7,7 @@ import type { BotMode, TradeType, Signal } from "../types";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { useToast } from "../context/ToastContext";
 import { AppNavbar } from "../components/Navbar";
 import { Card, CardContent } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const [showConfetti, setShowConfetti] = useState(false);
 
   const { data: status } = useQuery({ queryKey: ["status"], queryFn: api.status, refetchInterval: 10000 });
@@ -25,6 +27,8 @@ export default function Dashboard() {
   const { data: performance } = useQuery({ queryKey: ["performance"], queryFn: api.performance, refetchInterval: 10000 });
   const { data: botStatus } = useQuery({ queryKey: ["botStatus"], queryFn: api.botStatus });
   const { data: botLogs } = useQuery({ queryKey: ["botLogs"], queryFn: api.botLogs, refetchInterval: 5000 });
+  const { data: _portfolio } = useQuery({ queryKey: ["portfolio"], queryFn: api.portfolio, refetchInterval: 15000 });
+  const portfolio = _portfolio as import("../types").PortfolioStats | undefined;
 
   const onWSMessage = useCallback((msg: { type: string; data: unknown }) => {
     if (msg.type === "status") queryClient.setQueryData(["status"], msg.data);
@@ -265,6 +269,69 @@ export default function Dashboard() {
             )}
           </Card>
         </motion.div>
+
+        {/* Portfolio */}
+        {portfolio && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-heading text-lg font-bold">Portfolio Overview</h2>
+                <div className="flex gap-2">
+                  <button onClick={() => { api.exportTradesCsv().then(b => { const url = URL.createObjectURL(b); const a = document.createElement("a"); a.href = url; a.download = "trades.csv"; a.click(); URL.revokeObjectURL(url); addToast("Trades exported", "success"); }).catch(() => addToast("Export failed", "error")); }}
+                    className="text-xs text-gray-400 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Export Trades
+                  </button>
+                  <button onClick={() => navigate("/strategy-performance")}
+                    className="text-xs text-accent hover:text-accent-dark border border-accent/20 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Strategy Performance
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <div className="text-gray-500 text-xs">Total P&L</div>
+                  <div className={`font-heading text-lg font-bold ${portfolio.total_pnl >= 0 ? "text-accent" : "text-red-400"}`}>
+                    ${portfolio.total_pnl.toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500 text-xs">Unrealized P&L</div>
+                  <div className={`font-heading text-lg font-bold ${portfolio.total_unrealized_pnl >= 0 ? "text-accent" : "text-red-400"}`}>
+                    ${portfolio.total_unrealized_pnl.toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500 text-xs">Open Positions</div>
+                  <div className="font-heading text-lg font-bold">{portfolio.open_positions}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500 text-xs">Total Invested</div>
+                  <div className="font-heading text-lg font-bold">${portfolio.total_invested.toFixed(2)}</div>
+                </div>
+              </div>
+              {portfolio.pair_breakdown.length > 0 && (
+                <div>
+                  <h3 className="font-heading text-sm font-semibold text-gray-400 mb-2">Pair Breakdown</h3>
+                  <div className="space-y-1.5">
+                    {portfolio.pair_breakdown.map((p) => (
+                      <div key={p.symbol} className="flex items-center justify-between text-sm">
+                        <span className="text-gray-300">{p.symbol}</span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-gray-500 text-xs">{p.trades} trades</span>
+                          <span className={`font-semibold ${p.pnl >= 0 ? "text-accent" : "text-red-400"}`}>
+                            ${p.pnl.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+          </motion.div>
+        )}
 
         {/* Signals Preview */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>

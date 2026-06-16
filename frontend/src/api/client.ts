@@ -16,6 +16,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (_token) headers["Authorization"] = `Bearer ${_token}`;
   const res = await fetch(`${BASE_URL}${path}`, { headers, ...options });
+  if (res.status === 429) {
+    window.dispatchEvent(new CustomEvent("rate-limited", { detail: "Rate limit exceeded. Please wait a moment." }));
+    throw new Error("Rate limit exceeded");
+  }
   if (res.status === 401) {
     setToken(null);
     window.location.href = "/login";
@@ -126,4 +130,65 @@ export const api = {
 
   // Admin
   adminUsers: () => request<import("../types").AdminUser[]>("/api/user/admin/users"),
+  adminAnalytics: () => request<{
+    total_users: number; monthly_users: number; active_bots: number;
+    total_trades: number; total_pnl: number;
+    plan_breakdown: { basic: number; pro: number; enterprise: number };
+    user_growth: { month: string; new_users: number }[];
+  }>("/api/admin/analytics"),
+
+  // Strategy performance
+  strategyPerformance: () => request<Record<string, { signals: number; wins: number; losses: number; total_pnl: number; win_rate: number; avg_confidence: number }>>("/api/strategy-performance"),
+
+  // Portfolio
+  portfolio: () => request<import("../types").PortfolioStats>("/api/portfolio"),
+
+  // CSV export
+  exportTradesCsv: async () => {
+    const res = await fetch(`${BASE_URL}/api/trades/export?token=${getToken()}`);
+    return res.blob();
+  },
+  exportPositionsCsv: async () => {
+    const res = await fetch(`${BASE_URL}/api/positions/export?token=${getToken()}`);
+    return res.blob();
+  },
+
+  // Backtesting
+  runBacktest: (params: { pair: string; strategy: string; days: number }) =>
+    request<{ status: string; message: string }>("/api/backtest", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+
+  // GDPR
+  exportUserData: () => request<unknown>("/api/user/data-export"),
+  deleteUserData: () => request<{ detail: string }>("/api/user/data-delete", { method: "DELETE" }),
+
+  // Strategy config
+  getStrategyConfig: () => request<{ strategy_settings: Record<string, unknown> }>("/api/user/strategy-config"),
+  updateStrategyConfig: (data: { strategy_settings: Record<string, unknown> }) =>
+    request<{ success: boolean }>("/api/user/strategy-config", { method: "PUT", body: JSON.stringify(data) }),
+
+  // Notification prefs
+  getNotificationPrefs: () => request<{ notification_prefs: import("../types").NotificationPrefs }>("/api/user/notification-prefs"),
+  updateNotificationPrefs: (data: { notification_prefs: import("../types").NotificationPrefs }) =>
+    request<{ success: boolean }>("/api/user/notification-prefs", { method: "PUT", body: JSON.stringify(data) }),
+
+  // Custom pairs
+  getSelectedPairs: () => request<{ selected_pairs: string[] }>("/api/user/selected-pairs"),
+  updateSelectedPairs: (data: { selected_pairs: string[] }) =>
+    request<{ success: boolean; selected_pairs: string[] }>("/api/user/selected-pairs", { method: "PUT", body: JSON.stringify(data) }),
+
+  // User API keys
+  createApiKey: (name: string) =>
+    request<{ success: boolean; api_key: string; key_prefix: string; name: string }>("/api/user/api-keys", { method: "POST", body: JSON.stringify({ name }) }),
+  listApiKeys: () => request<{ api_keys: import("../types").UserApiKey[] }>("/api/user/api-keys"),
+  revokeApiKey: (keyId: number) =>
+    request<{ success: boolean }>(`/api/user/api-keys/${keyId}`, { method: "DELETE" }),
+
+  // Trial
+  trialStatus: () => request<{ trial_end: string | null; is_expired: boolean; remaining_days: number; plan: string }>("/api/user/trial-status"),
+
+  // Usage
+  usageStats: () => request<{ api_calls: number; bot_hours: number; trade_volume: number }>("/api/user/usage"),
 };

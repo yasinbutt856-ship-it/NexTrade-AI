@@ -71,6 +71,8 @@ export default function Landing() {
             <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
             <a href="#faq" className="text-sm text-gray-400 hover:text-white transition-colors">FAQ</a>
+            <Link to="/about" className="text-sm text-gray-400 hover:text-white transition-colors">About</Link>
+            <Link to="/changelog" className="text-sm text-gray-400 hover:text-white transition-colors">Updates</Link>
             {user ? (
               <button onClick={() => navigate("/dashboard")} className="text-sm bg-accent hover:bg-accent-dark text-[#07070d] px-5 py-2 rounded-lg font-bold transition-all shadow-lg shadow-accent/20">
                 Dashboard
@@ -271,7 +273,7 @@ export default function Landing() {
           <div className="text-center mb-16">
             <div className="text-accent text-sm font-semibold tracking-[0.2em] uppercase mb-3">Pricing</div>
             <h2 className="font-heading text-3xl md:text-5xl font-bold mb-4">Simple, <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-blue-accent">Transparent</span></h2>
-            <p className="text-gray-400 max-w-xl mx-auto">No hidden fees. No lock-in contracts. Cancel anytime.</p>
+            <p className="text-gray-400 max-w-xl mx-auto">No hidden fees. No lock-in contracts. Cancel anytime. <span className="text-accent">99.5% uptime SLA</span> on all plans.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -379,6 +381,8 @@ export default function Landing() {
               <h4 className="font-heading text-xs font-bold tracking-wider text-gray-400 mb-3 uppercase">Company</h4>
               <ul className="space-y-2 text-xs text-gray-500">
                 <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link to="/changelog" className="hover:text-white transition-colors">Changelog</Link></li>
+                <li><Link to="/security" className="hover:text-white transition-colors">Security</Link></li>
                 <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
                 <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link to="/whitepaper" className="hover:text-white transition-colors">Whitepaper</Link></li>

@@ -52,6 +52,8 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - **Whitepaper page** (`/whitepaper`): Deep-dive on all 8 strategies (RSI, MACD, EMA, Volume, Bollinger, Supertrend, ADX, Ichimoku) + architecture (Redis pub/sub flow) + risk management (circuit breaker, trailing stop-loss, position sizing, cooldown)
 - **Company identity in footer**: 3-column grid (brand description, company links to Terms/Privacy/Whitepaper/Docs, contact info — support@nextrade.ai, Larnaca, Cyprus). Real links replace plain text.
 - **Support email in Navbar**: `Support` mailto: link in Navbar for anonymous users, plus `support@nextrade.ai` in footer contact section
+- **About page** (`/about`): Mission, development timeline (2025 Q3 → 2026 Q2), architecture overview (Analyst + Trader via Redis), team (Abeer Meer), company info (NexTrade AI Ltd., Larnaca, Cyprus)
+- **GitHub repo polish**: Description, homepage URL (`https://mexc-trading-bot.netlify.app`), 7 topics set via `gh repo edit`; README updated with Trust & Transparency section + `/api/stats` in API reference
 - **Frontend builds clean** (zero errors), pushed to GitHub, deployed to Netlify + Railway
 
 ## Remaining

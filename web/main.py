@@ -15,6 +15,7 @@ from web.auth_router import router as auth_router, seed_admin
 from web.user_router import router as user_router
 from web.wallet_router import router as wallet_router
 from web.withdrawal_router import router as withdrawal_router
+from web.platform_router import router as platform_router
 from web.auth import decode_token
 from shared.redis_client import create_redis_client
 from shared.config_loader import ConfigLoader
@@ -78,6 +79,7 @@ app.add_middleware(RateLimitMiddleware)
 app.include_router(auth_router)
 app.include_router(wallet_router)
 app.include_router(withdrawal_router)
+app.include_router(platform_router)
 app.include_router(user_router)
 app.include_router(router)
 

@@ -8,6 +8,18 @@ class Base(DeclarativeBase):
     pass
 
 
+class UserApiKeyRecord(Base):
+    __tablename__ = "user_api_keys"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    key_prefix = Column(String(8), nullable=False)
+    key_hash = Column(String(255), nullable=False)
+    name = Column(String(100), nullable=True)
+    is_active = Column(Boolean, default=True)
+    last_used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class SignalActionDB(str, enum.Enum):
     buy = "buy"
     sell = "sell"
@@ -117,6 +129,15 @@ class UserRecord(Base):
     verification_token_expires = Column(DateTime, nullable=True)
     reset_token = Column(String(255), nullable=True)
     reset_token_expires = Column(DateTime, nullable=True)
+    trial_end = Column(DateTime, nullable=True)
+    api_key_hash = Column(String(255), nullable=True)
+    api_key_prefix = Column(String(8), nullable=True)
+    strategy_settings = Column(JSON, nullable=True)
+    notification_prefs = Column(JSON, nullable=True)
+    selected_pairs = Column(JSON, nullable=True)
+    usage_api_calls = Column(Integer, default=0)
+    usage_bot_hours = Column(Float, default=0.0)
+    usage_trade_volume = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
 

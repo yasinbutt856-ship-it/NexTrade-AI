@@ -144,6 +144,41 @@ export interface AdminPendingApproval extends WhitelistEntry {
   user_id: number;
 }
 
+export interface PortfolioStats {
+  total_pnl: number;
+  total_trades: number;
+  win_rate: number;
+  open_positions: number;
+  total_unrealized_pnl: number;
+  total_invested: number;
+  pair_breakdown: { symbol: string; trades: number; pnl: number }[];
+}
+
+export interface NotificationPrefs {
+  email: boolean;
+  telegram: boolean;
+  push: boolean;
+}
+
+export interface UserApiKey {
+  id: number;
+  key_prefix: string;
+  name: string | null;
+  is_active: boolean;
+  last_used_at: string | null;
+  created_at: string;
+}
+
+export interface AdminAnalytics {
+  total_users: number;
+  monthly_users: number;
+  active_bots: number;
+  total_trades: number;
+  total_pnl: number;
+  plan_breakdown: { basic: number; pro: number; enterprise: number };
+  user_growth: { month: string; new_users: number }[];
+}
+
 export interface AdminUser {
   id: number;
   email: string;

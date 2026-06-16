@@ -3,15 +3,17 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { AppNavbar } from "../components/Navbar";
 import { Card } from "../components/ui/Card";
-import { WalletIcon, KeyIcon, ShieldIcon, SettingsIcon, ChartIcon, CheckIcon } from "../components/Icons";
+import { WalletIcon, KeyIcon, ShieldIcon, SettingsIcon, ChartIcon, CheckIcon, CopyIcon, TrashIcon, BrainIcon } from "../components/Icons";
 import { PageTransition } from "../components/PageTransition";
 import WalletConnect from "../components/WalletConnect";
 import type { BotMode, TradeType, WhitelistEntry } from "../types";
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
+  const { addToast } = useToast();
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
   const [keysSaved, setKeysSaved] = useState(false);
@@ -21,6 +23,12 @@ export default function Settings() {
   const [newAddress, setNewAddress] = useState("");
   const [newNetwork, setNewNetwork] = useState("ERC20");
   const [newLabel, setNewLabel] = useState("");
+  const [selectedPairs, setSelectedPairs] = useState<string[]>(["BTC/USDT", "ETH/USDT", "SOL/USDT"]);
+  const [notifEmail, setNotifEmail] = useState(true);
+  const [notifTelegram, setNotifTelegram] = useState(false);
+  const [notifPush, setNotifPush] = useState(false);
+  const [newApiKeyName, setNewApiKeyName] = useState("");
+  const [generatedKey, setGeneratedKey] = useState("");
 
   const { data: existingKeys } = useQuery({
     queryKey: ["mexcKeys"],
@@ -69,6 +77,47 @@ export default function Settings() {
       setWithdrawalDelay(withdrawalSettings.withdrawal_delay_hours);
     }
   }, [withdrawalSettings]);
+
+  const { data: pairsData } = useQuery({ queryKey: ["selectedPairs"], queryFn: api.getSelectedPairs });
+  const { data: notifData } = useQuery({ queryKey: ["notifPrefs"], queryFn: api.getNotificationPrefs });
+  const { data: apiKeysData, refetch: refetchApiKeys } = useQuery({ queryKey: ["apiKeys"], queryFn: api.listApiKeys });
+
+  useEffect(() => {
+    if (pairsData?.selected_pairs) setSelectedPairs(pairsData.selected_pairs);
+  }, [pairsData]);
+
+  useEffect(() => {
+    if (notifData?.notification_prefs) {
+      setNotifEmail(notifData.notification_prefs.email ?? true);
+      setNotifTelegram(notifData.notification_prefs.telegram ?? false);
+      setNotifPush(notifData.notification_prefs.push ?? false);
+    }
+  }, [notifData]);
+
+  const savePairs = useMutation({
+    mutationFn: () => api.updateSelectedPairs({ selected_pairs: selectedPairs }),
+    onSuccess: () => { addToast("Pairs updated", "success"); },
+  });
+
+  const saveNotifs = useMutation({
+    mutationFn: () => api.updateNotificationPrefs({ notification_prefs: { email: notifEmail, telegram: notifTelegram, push: notifPush } }),
+    onSuccess: () => addToast("Notification preferences saved", "success"),
+  });
+
+  const createKey = useMutation({
+    mutationFn: () => api.createApiKey(newApiKeyName || "Default"),
+    onSuccess: (data: { api_key: string }) => {
+      setGeneratedKey(data.api_key);
+      setNewApiKeyName("");
+      refetchApiKeys();
+      addToast("API key created — copy it now, it won't be shown again", "success");
+    },
+  });
+
+  const revokeKey = useMutation({
+    mutationFn: (id: number) => api.revokeApiKey(id),
+    onSuccess: () => { refetchApiKeys(); addToast("API key revoked", "info"); },
+  });
 
   const saveWithdrawalDelay = useMutation({
     mutationFn: () => api.updateWithdrawalSettings({ withdrawal_delay_hours: withdrawalDelay }),
@@ -341,8 +390,163 @@ export default function Settings() {
             </Card>
           </motion.div>
 
-          {/* Account Info */}
+          {/* Strategy Config */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <BrainIcon className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h2 className="font-heading font-bold text-lg">Strategy Configuration</h2>
+                  <p className="text-gray-400 text-sm">View which strategies are active. Tuning coming soon.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {["rsi", "macd", "ema", "volume", "bollinger", "supertrend", "adx", "ichimoku"].map((s) => (
+                  <div key={s} className="bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3 text-sm capitalize text-gray-300">
+                    {s}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Custom Pairs */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <ChartIcon className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h2 className="font-heading font-bold text-lg">Trading Pairs</h2>
+                  <p className="text-gray-400 text-sm">Select which pairs to trade</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "ADA/USDT", "DOGE/USDT", "XRP/USDT", "AVAX/USDT", "DOT/USDT", "LINK/USDT"].map((p) => (
+                  <button key={p} onClick={() => setSelectedPairs(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p])}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+                      selectedPairs.includes(p)
+                        ? "bg-accent/10 border-accent/30 text-accent"
+                        : "bg-dark-800 border-white/10 text-gray-400 hover:border-white/20"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => savePairs.mutate()} disabled={savePairs.isPending}
+                className="bg-accent hover:bg-accent-dark text-dark-900 font-bold px-6 py-2.5 rounded-xl transition-all disabled:opacity-40 self-start"
+              >
+                {savePairs.isPending ? "Saving..." : "Save Pairs"}
+              </button>
+            </Card>
+          </motion.div>
+
+          {/* Notification Prefs */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <SettingsIcon className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h2 className="font-heading font-bold text-lg">Notifications</h2>
+                  <p className="text-gray-400 text-sm">Choose how you receive alerts</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { key: "email", label: "Email", val: notifEmail, set: setNotifEmail, desc: "Signal alerts and weekly summaries" },
+                  { key: "telegram", label: "Telegram", val: notifTelegram, set: setNotifTelegram, desc: "Real-time trade execution alerts" },
+                  { key: "push", label: "Push", val: notifPush, set: setNotifPush, desc: "Browser push notifications" },
+                ].map((n) => (
+                  <div key={n.key} className="flex items-center justify-between bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium">{n.label}</div>
+                      <div className="text-xs text-gray-500">{n.desc}</div>
+                    </div>
+                    <button onClick={() => n.set(!n.val)}
+                      className={`w-10 h-6 rounded-full transition-all border ${
+                        n.val ? "bg-accent border-accent" : "bg-dark-800 border-white/10"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${n.val ? "translate-x-5" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => saveNotifs.mutate()} disabled={saveNotifs.isPending}
+                className="bg-accent hover:bg-accent-dark text-dark-900 font-bold px-6 py-2.5 rounded-xl transition-all disabled:opacity-40 self-start"
+              >
+                {saveNotifs.isPending ? "Saving..." : "Save Preferences"}
+              </button>
+            </Card>
+          </motion.div>
+
+          {/* API Keys */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <KeyIcon className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h2 className="font-heading font-bold text-lg">API Keys (Programmatic Access)</h2>
+                  <p className="text-gray-400 text-sm">Create keys for API access to your trading data</p>
+                </div>
+              </div>
+
+              {generatedKey && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                  <p className="text-yellow-400 text-sm font-semibold mb-2">Key generated — copy it now!</p>
+                  <div className="flex gap-2">
+                    <code className="flex-1 bg-dark-900 px-3 py-2 rounded-lg text-xs font-mono text-yellow-300 break-all">{generatedKey}</code>
+                    <button onClick={() => { navigator.clipboard.writeText(generatedKey); addToast("Copied!", "success"); }}
+                      className="text-accent hover:text-accent-dark p-2"
+                    >
+                      <CopyIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <button onClick={() => setGeneratedKey("")} className="text-xs text-gray-500 mt-2 hover:text-white">Dismiss</button>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <input type="text" value={newApiKeyName} onChange={e => setNewApiKeyName(e.target.value)}
+                  className="flex-1 bg-dark-800 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-accent/50"
+                  placeholder="Key name (e.g. My Script)" />
+                <button onClick={() => createKey.mutate()} disabled={createKey.isPending}
+                  className="bg-accent hover:bg-accent-dark text-dark-900 font-bold px-5 py-2.5 rounded-xl transition-all disabled:opacity-40"
+                >
+                  {createKey.isPending ? "..." : "Generate"}
+                </button>
+              </div>
+
+              {apiKeysData?.api_keys && apiKeysData.api_keys.length > 0 && (
+                <div className="space-y-2">
+                  {apiKeysData.api_keys.map((k) => (
+                    <div key={k.id} className="flex items-center justify-between bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3">
+                      <div>
+                        <span className="text-sm font-mono text-gray-300">{k.key_prefix}...</span>
+                        <span className="text-xs text-gray-500 ml-2">{k.name}</span>
+                      </div>
+                      <button onClick={() => revokeKey.mutate(k.id)}
+                        className="text-red-400 hover:text-red-300 p-1"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </motion.div>
+
+          {/* Account Info */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
             <Card className="p-6">
               <h2 className="font-heading font-bold text-lg mb-4">Account</h2>
               <div className="space-y-2 text-sm">
