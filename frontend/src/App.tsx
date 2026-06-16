@@ -17,6 +17,9 @@ import Positions from "./pages/Positions";
 import Signals from "./pages/Signals";
 import Trades from "./pages/Trades";
 import Docs from "./pages/Docs";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Whitepaper from "./pages/Whitepaper";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchInterval: 5000, retry: 2 } },
@@ -41,6 +44,9 @@ function AnimatedRoutes() {
           <Route path="/trades" element={<ProtectedRoute><Trades /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
           <Route path="/docs" element={<Docs />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/whitepaper" element={<Whitepaper />} />
         </Routes>
       </motion.div>
     </AnimatePresence>

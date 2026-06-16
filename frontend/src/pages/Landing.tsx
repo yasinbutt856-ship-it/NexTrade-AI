@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import { HeroIllustration } from "../components/HeroIllustration";
 import { LightningIcon, ChartIcon, ShieldIcon, KeyIcon, BrainIcon, BotIcon, EyeIcon, FlaskIcon, ClockIcon } from "../components/Icons";
+import { api } from "../api/client";
 
 const plans = [
   {
@@ -48,6 +49,10 @@ export default function Landing() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [stats, setStats] = useState<{ total_users: number; weekly_users: number; total_trades: number; win_rate: number } | null>(null);
+  useEffect(() => {
+    api.stats().then(setStats).catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#07070d] text-white overflow-hidden">
@@ -131,8 +136,10 @@ export default function Landing() {
                     </div>
                   ))}
                 </div>
-                <div className="text-xs text-gray-500">
-                  <span className="text-white font-bold">2,400+</span> traders active
+                <div className="flex items-center gap-5 text-xs text-gray-500">
+                  <span><span className="text-white font-bold">{stats ? `${stats.total_users}+` : "..."}</span> traders</span>
+                  <span className="text-white/10">|</span>
+                  <span><span className="text-white font-bold">{stats ? `${stats.total_trades}+` : "..."}</span> trades executed</span>
                 </div>
               </div>
             </div>
@@ -345,7 +352,7 @@ export default function Landing() {
           <h2 className="font-heading text-3xl md:text-5xl font-bold mb-6">
             Ready to Trade <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-blue-accent">Smarter?</span>
           </h2>
-          <p className="text-gray-400 mb-10 max-w-xl mx-auto">Join 2,400+ traders who already automated their MEXC trading with NexTrade AI. Start risk-free with paper trading.</p>
+          <p className="text-gray-400 mb-10 max-w-xl mx-auto">Join {stats ? `${stats.total_users}+` : ""} traders who already automated their MEXC trading with NexTrade AI. Start risk-free with paper trading.</p>
           <Link to="/signup" className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-[#07070d] px-10 py-4 rounded-xl font-bold text-lg transition-all shadow-xl shadow-accent/25 hover:shadow-accent/40">
             Start Free Trial
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
@@ -354,20 +361,40 @@ export default function Landing() {
       </section>
 
       {/* ===== FOOTER ===== */}
-      <footer className="border-t border-white/[0.04] py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-accent to-blue-accent flex items-center justify-center">
-              <span className="text-[#07070d] font-heading font-bold text-[10px]">N</span>
+      <footer className="border-t border-white/[0.04] py-12 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-6 h-6 rounded bg-gradient-to-br from-accent to-blue-accent flex items-center justify-center">
+                  <span className="text-[#07070d] font-heading font-bold text-[10px]">N</span>
+                </div>
+                <span className="font-heading font-bold text-sm tracking-[0.15em]">NEXTRADE</span>
+              </div>
+              <p className="text-gray-500 text-xs leading-relaxed max-w-xs">
+                Institutional-grade AI trading bots for MEXC exchange. Fully automated, self-custodial, transparent.
+              </p>
             </div>
-            <span className="font-heading font-bold text-sm tracking-[0.15em]">NEXTRADE</span>
+            <div>
+              <h4 className="font-heading text-xs font-bold tracking-wider text-gray-400 mb-3 uppercase">Company</h4>
+              <ul className="space-y-2 text-xs text-gray-500">
+                <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/whitepaper" className="hover:text-white transition-colors">Whitepaper</Link></li>
+                <li><Link to="/docs" className="hover:text-white transition-colors">Documentation</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-heading text-xs font-bold tracking-wider text-gray-400 mb-3 uppercase">Contact</h4>
+              <ul className="space-y-2 text-xs text-gray-500">
+                <li>support@nextrade.ai</li>
+                <li>NexTrade AI Ltd.</li>
+                <li>Larnaca, Cyprus</li>
+              </ul>
+            </div>
           </div>
-          <div className="flex items-center gap-6 text-xs text-gray-500">
-            <span>© 2026 NexTrade AI</span>
-            <span className="hidden sm:inline">·</span>
-            <span>Terms</span>
-            <span className="hidden sm:inline">·</span>
-            <span>Privacy</span>
+          <div className="border-t border-white/[0.05] pt-6 text-center text-xs text-gray-600">
+            © 2026 NexTrade AI Ltd. All rights reserved.
           </div>
         </div>
       </footer>

@@ -54,6 +54,7 @@ export function AppNavbar() {
             </>
           ) : (
             <div className="flex items-center gap-4">
+              <a href="mailto:support@nextrade.ai" className="text-sm text-gray-500 hover:text-white transition-colors hidden sm:block">Support</a>
               <Link to="/login" className="text-sm text-gray-400 hover:text-white transition-colors">Sign In</Link>
               <Link to="/signup" className="text-sm bg-accent hover:bg-accent-dark text-dark-900 px-5 py-2 rounded-lg font-bold transition-all shadow-lg shadow-accent/20">
                 Get Started

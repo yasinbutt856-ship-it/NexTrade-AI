@@ -37,6 +37,7 @@ export const api = {
   performance: () => request<import("../types").PerformanceData>("/api/performance"),
   botLogs: () => request<import("../types").BotLogEntry[]>("/api/logs"),
   settings: () => request<Record<string, unknown>>("/api/settings"),
+  stats: () => request<import("../types").SiteStats>("/api/stats"),
 
   // Auth
   register: (email: string, password: string, plan = "basic") =>

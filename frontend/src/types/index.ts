@@ -48,6 +48,13 @@ export interface Trade {
   timestamp: string;
 }
 
+export interface SiteStats {
+  total_users: number;
+  weekly_users: number;
+  total_trades: number;
+  win_rate: number;
+}
+
 export interface BotStatus {
   mode: BotMode;
   analyst_alive: boolean;

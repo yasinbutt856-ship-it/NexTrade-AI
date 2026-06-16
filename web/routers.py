@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, desc
@@ -69,6 +69,42 @@ async def get_status():
         "analyst_alive": analyst_alive,
         "trader_alive": trader_alive,
         "uptime_seconds": 0,
+    }
+
+
+# --- Stats ---
+@router.get("/stats")
+async def get_stats(session: AsyncSession = Depends(get_session)):
+    from db.models import UserRecord
+
+    total = await session.execute(select(func.count(UserRecord.id)))
+    total_users = total.scalar() or 0
+
+    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    this_week = await session.execute(
+        select(func.count(UserRecord.id)).where(UserRecord.created_at >= week_ago)
+    )
+    weekly_users = this_week.scalar() or 0
+
+    trades = await session.execute(select(func.count(TradeRecord.id)))
+    total_trades = trades.scalar() or 0
+
+    closed_result = await session.execute(
+        select(func.count(), func.coalesce(func.sum(TradeRecord.pnl), 0))
+        .where(TradeRecord.pnl.isnot(None))
+    )
+    total_closed, total_pnl = closed_result.one()
+    wins_result = await session.execute(
+        select(func.count()).where(TradeRecord.pnl > 0)
+    )
+    wins = wins_result.scalar() or 0
+    win_rate = round(wins / total_closed * 100, 1) if total_closed > 0 else 0.0
+
+    return {
+        "total_users": total_users,
+        "weekly_users": weekly_users,
+        "total_trades": total_trades,
+        "win_rate": win_rate,
     }
 
 

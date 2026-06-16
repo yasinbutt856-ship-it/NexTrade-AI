@@ -74,16 +74,6 @@ export function HeroIllustration() {
 
       {/* Floating stat cards */}
       <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 1.2 }}
-        className="absolute -right-3 top-8 bg-dark-800/90 backdrop-blur-xl border border-white/[0.06] rounded-xl p-3 text-center shadow-xl"
-      >
-        <div className="text-accent font-heading text-lg font-bold">87%</div>
-        <div className="text-[10px] text-gray-500">Win Rate</div>
-      </motion.div>
-
-      <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 1.4 }}
