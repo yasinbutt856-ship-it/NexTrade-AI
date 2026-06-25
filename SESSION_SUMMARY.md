@@ -97,9 +97,15 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - `frontend/src/pages/Subscribe.tsx` — New: pricing page with Stripe checkout
 - `frontend/src/api/client.ts` — Added stripe API methods
 
+## Completed This Session (Jun 26 — Deployments + CI Fixes)
+1. **Frontend deployed to Vercel** — `https://dist-rho-sandy-41.vercel.app` (production, project: `abeermeer1/dist`)
+2. **CI workflows fixed** — Backend: `pip install -e ".[dev]"` to get pytest. Frontend: `npm ci --legacy-peer-deps` for peer dep conflict. Removed `--timeout` flag.
+3. **`stripe` added to pyproject.toml** deps for production pip install
+
 ## Remaining
-1. Custom domain (once purchased)
-2. **Stripe keys** — Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*` env vars on Railway before subscription works
+1. Custom domain
+2. **Stripe keys** — Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*` env vars on Railway
+3. Railway has stray project on old (Hamza) account — if still visible, delete it
 
 ## Key Decisions
 - Three-platform split: Netlify (frontend), Railway (backend+DB+Redis), GitHub (code)
@@ -118,7 +124,7 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 
 ## Critical Context
 - Backend: `https://mexc-trading-bot-production-c215.up.railway.app/health`
-- Frontend: `https://mexc-trading-bot.netlify.app`
+- Frontend: `https://dist-rho-sandy-41.vercel.app` (Vercel) — was `https://mexc-trading-bot.netlify.app` (Netlify, deleted)
 - Analyst alive, trader alive, mode: live
 - Railway services: mexc-trading-bot (FastAPI), analyst (signal gen), trader (multi-tenant executor)
 - 8 strategies: RSI, MACD cross, EMA trend, volume breakout, Bollinger squeeze, Supertrend, ADX, Ichimoku
