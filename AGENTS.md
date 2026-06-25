@@ -16,7 +16,7 @@
 - Frontend build: `cd frontend && npm run build`
 
 ## Auth
-- Admin: abeermeer7979@gmail.com / Abeer@123
+- Admin: abeermeer7979@gmail.com (password in Railway env vars, NOT in code)
 - JWT Bearer tokens, bcrypt passwords, Fernet AES-256 key encryption
 
 ## Strategies (10)

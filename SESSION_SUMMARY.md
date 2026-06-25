@@ -11,7 +11,7 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 ## Done (Expanded)
 - **Analyst/Trader DEAD fixed**: `lpush` for signals, 15s heartbeat caches, status endpoint reads `settings.yaml` mode correctly
 - **JWT auth**: bcrypt hash/verify, JWT create/decode (HS256, 24h), register/login/me with Bearer middleware
-- **Admin seed**: `abeermeer7979@gmail.com` / `Abeer@123` (enterprise, is_admin) on startup
+- **Admin seed**: `abeermeer7979@gmail.com` (enterprise, is_admin, password in Railway env vars)
 - **Exchange key mgmt**: Fernet AES-256 encrypt via `shared/encryption.py`, PUT endpoint only (no GET — keys never returned to client)
 - **User settings API**: paper/live, spot/futures, max_position, bot start/stop via Redis pub/sub `bot:control`
 - **Admin user list**: GET /api/user/admin/users — all users with plan/mode/bot_active/key status
