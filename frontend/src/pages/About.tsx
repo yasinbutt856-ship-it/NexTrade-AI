@@ -11,7 +11,7 @@ const milestones = [
   { year: "2025 Q3", event: "Project started — analyst + trader bots for MEXC" },
   { year: "2025 Q4", event: "Full SaaS platform: JWT auth, plan enforcement, encrypted keys" },
   { year: "2026 Q1", event: "Wallet auth (EVM + Solana), withdrawal protection, WebSocket real-time" },
-  { year: "2026 Q2", event: "8 strategies, multi-tenant trader, 64 tests, production deployment" },
+  { year: "2026 Q2", event: "15 strategies, multi-tenant trader, 64 tests, production deployment" },
 ];
 
 export default function About() {
@@ -77,7 +77,7 @@ export default function About() {
               <div className="bg-dark-900/50 rounded-xl p-5 border border-white/[0.04]">
                 <h3 className="font-heading text-sm font-bold text-accent mb-2">Analyst Bot</h3>
                 <p className="text-gray-400 text-xs leading-relaxed">
-                  Scans markets every 15 minutes across 4 timeframes using 8 strategies. Generates signals with confidence scores and publishes them to Redis.
+                  Scans markets every 15 minutes across 4 timeframes using 15 strategies. Generates signals with confidence scores and publishes them to Redis.
                 </p>
               </div>
               <div className="bg-dark-900/50 rounded-xl p-5 border border-white/[0.04]">

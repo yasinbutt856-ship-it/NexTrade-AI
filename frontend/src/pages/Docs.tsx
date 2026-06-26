@@ -6,7 +6,7 @@ const sections = [
     title: "Getting Started",
     icon: "🚀",
     items: [
-      { q: "What is NexTrade AI?", a: "NexTrade AI is an automated trading bot for MEXC exchange. It runs two bots: an Analyst that scans markets using 8 strategies (RSI, MACD, EMA, Bollinger, Volume, Supertrend, ADX, Ichimoku) and a Trader that executes signals on your account." },
+      { q: "What is NexTrade AI?", a: "NexTrade AI is an automated trading bot for MEXC exchange. It runs two bots: an Analyst that scans markets using 15 strategies (RSI, MACD, EMA, Bollinger, Volume, Supertrend, ADX, Ichimoku, Pullback, Range, CounterTrend, StochRSI, PSAR, MFI, VWAP) and a Trader that executes signals on your account." },
       { q: "How do I start?", a: "1. Sign up for an account\n2. Go to Settings and add your MEXC API keys (with trading permission, no withdrawal)\n3. Configure your trading mode (paper/live) and type (spot/futures)\n4. Click Start Bot on the Dashboard" },
       { q: "What plans are available?", a: "Basic ($29/mo) — 1 bot, 3 pairs, spot only, max $500 position\nPro ($79/mo) — 3 bots, 10 pairs, spot+futures, max $5,000\nEnterprise ($199/mo) — unlimited bots, all pairs, spot+futures, unlimited position, API access" },
     ],
@@ -15,7 +15,7 @@ const sections = [
     title: "Trading Concepts",
     icon: "📈",
     items: [
-      { q: "What strategies does the Analyst use?", a: "8 strategies: RSI oversold/overbought, MACD crossovers, EMA trend following, volume breakout detection, Bollinger squeeze, Supertrend, ADX trend strength, and Ichimoku cloud." },
+      { q: "What strategies does the Analyst use?", a: "15 strategies: RSI oversold/overbought, MACD crossovers, EMA trend following, volume breakout detection, Bollinger squeeze, Supertrend, ADX trend strength, Ichimoku cloud, Pullback on % drop, Range channel trading, CounterTrend RSI+EMA reversal, StochRSI fast oscillator, PSAR trend follower, MFI volume+RSI, and VWAP mean reversion." },
       { q: "What is paper trading?", a: "Paper mode simulates trades with virtual balance. No real money is at risk. Perfect for testing strategies before going live." },
       { q: "How does risk management work?", a: "Circuit breaker stops trading at 10% drawdown. Daily loss limits and cooldown periods prevent cascade failures. Trailing stop-loss protects profits." },
     ],

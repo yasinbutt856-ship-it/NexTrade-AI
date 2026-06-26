@@ -37,12 +37,12 @@ const plans = [
 ];
 
 const faqs = [
-  { q: "How does NexTrade AI work?", a: "NexTrade AI runs two bots — an Analyst that scans markets using 8 strategies (RSI, MACD, EMA, etc.) and a Trader that executes signals on your exchange account. You connect your API keys and click start." },
+  { q: "How does NexTrade AI work?", a: "NexTrade AI runs two bots — an Analyst that scans markets using 15 strategies (RSI, MACD, EMA, CounterTrend, etc.) and a Trader that executes signals on your exchange account. You connect your API keys and click start." },
   { q: "Is my money safe?", a: "We never custody your funds. You connect your own exchange API keys with restricted permissions. We can only trade — no withdrawals. All keys are encrypted at rest with AES-256." },
   { q: "Can I test before going live?", a: "Yes. Every account gets paper trading mode. The bot simulates trades with virtual balance so you can see performance before risking real capital." },
   { q: "What exchanges do you support?", a: "MEXC, Binance, and Bybit — spot and perpetual futures. More exchanges coming soon." },
   { q: "Can I cancel anytime?", a: "Yes. No lock-in contracts. You can stop your bot or cancel your subscription at any time." },
-  { q: "What kind of returns can I expect?", a: "Returns vary by market conditions. Our 8 strategies are designed for different market regimes. Paper trade first to evaluate performance with your settings." },
+  { q: "What kind of returns can I expect?", a: "Returns vary by market conditions. Our 15 strategies are designed for different market regimes. Paper trade first to evaluate performance with your settings." },
 ];
 
 export default function Landing() {
@@ -173,7 +173,7 @@ export default function Landing() {
               <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.1, 0.0, 1.0] }}
                 className="text-lg text-white/40 leading-relaxed max-w-lg"
               >
-                Institutional-grade AI that scans markets across 8 strategies, manages risk in real time, and executes trades 24/7 on your exchange account.
+                Institutional-grade AI that scans markets across 15 strategies, manages risk in real time, and executes trades 24/7 on your exchange account.
               </motion.p>
 
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.45, ease: [0.25, 0.1, 0.0, 1.0] }}
@@ -246,7 +246,7 @@ export default function Landing() {
                   {
                     step: "02", Icon: LightningIcon,
                     title: "Configure & Launch",
-                    desc: "Choose spot or futures, set risk parameters (max position, drawdown limit), pick your strategies, and start the bot. The analyst scans 8 strategies across timeframes.",
+                    desc: "Choose spot or futures, set risk parameters (max position, drawdown limit), pick your strategies, and start the bot. The analyst scans 15 strategies across timeframes.",
                   },
                   {
                     step: "03", Icon: ChartIcon,

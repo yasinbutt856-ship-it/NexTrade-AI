@@ -423,7 +423,7 @@ export default function Settings() {
                 </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {["rsi", "macd", "ema", "volume", "bollinger", "supertrend", "adx", "ichimoku"].map((s) => (
+                {["rsi", "macd_cross", "ema_trend", "volume_breakout", "bollinger_squeeze", "supertrend", "adx", "ichimoku", "pullback", "range", "counter_trend", "stoch_rsi", "psar", "mfi", "vwap"].map((s) => (
                   <div key={s} className="bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3 text-sm capitalize text-gray-300">
                     {s}
                   </div>
