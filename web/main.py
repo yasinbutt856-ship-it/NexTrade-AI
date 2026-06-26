@@ -72,7 +72,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://mexc-trading-bot.netlify.app",
+        "https://dist-rho-sandy-41.vercel.app",
         "https://mexc-trading-bot-production-c215.up.railway.app",
         "https://dist-rho-sandy-41.vercel.app",
         "https://dist-2pmtfazax-abeermeer1.vercel.app",

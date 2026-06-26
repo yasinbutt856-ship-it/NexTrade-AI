@@ -83,7 +83,7 @@ async def register(data: RegisterRequest, session: AsyncSession = Depends(get_se
     await session.commit()
     await session.refresh(user)
     notifier = _get_notifier()
-    verify_link = f"https://mexc-trading-bot.netlify.app/verify-email?token={verification_token}"
+    verify_link = f"https://dist-rho-sandy-41.vercel.app/verify-email?token={verification_token}"
     try:
         await notifier.send_custom_email(
             to=user.email,
@@ -95,7 +95,7 @@ async def register(data: RegisterRequest, session: AsyncSession = Depends(get_se
         await notifier.send_custom_email(
             to=user.email,
             subject="Welcome to NexTrade AI - Getting Started",
-            body=f"Hi {user.email},\n\nThanks for joining! Here's how to start:\n1. Get MEXC API keys\n2. Connect them in Settings\n3. Start Paper Trading\n\nThe dashboard link: https://mexc-trading-bot.netlify.app/dashboard",
+            body=f"Hi {user.email},\n\nThanks for joining! Here's how to start:\n1. Get MEXC API keys\n2. Connect them in Settings\n3. Start Paper Trading\n\nThe dashboard link: https://dist-rho-sandy-41.vercel.app/dashboard",
             html_template="welcome.html",
             email=user.email,
         )
@@ -164,7 +164,7 @@ async def forgot_password(data: ForgotPasswordRequest, session: AsyncSession = D
     user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
     await session.commit()
     notifier = _get_notifier()
-    reset_link = f"https://mexc-trading-bot.netlify.app/reset-password?token={reset_token}"
+    reset_link = f"https://dist-rho-sandy-41.vercel.app/reset-password?token={reset_token}"
     try:
         await notifier.send_custom_email(
             to=user.email,
