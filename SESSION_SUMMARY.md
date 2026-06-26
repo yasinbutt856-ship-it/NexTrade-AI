@@ -134,3 +134,5 @@ Fully autonomous two-bot trading system (Market Analyst + Trader Bot) for MEXC s
 - 22 frontend pages, all code-split (largest chunk 336KB)
 - CI/CD ready: GitHub Actions test + deploy workflows
 - Email templates: 4 branded HTML templates for verification, reset, welcome, trade alerts
+
+- Railway env vars set and triggered redeploy (Jun 26)
