@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/subscribe")
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://mexc-trading-bot.netlify.app")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://dist-rho-sandy-41.vercel.app")
 
 stripe.api_key = STRIPE_SECRET_KEY
 
