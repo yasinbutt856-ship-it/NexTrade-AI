@@ -12,6 +12,10 @@ env/
 .env
 config/.env
 
+# AI session files (local only, not for public repo)
+AGENTS.md
+SESSION_SUMMARY.md
+
 # IDE
 .vscode/
 .idea/
