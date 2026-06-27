@@ -27,6 +27,8 @@ class SignalAggregator:
         self.paper_min_signals_required = paper.get("min_signals_required", self.min_signals_required)
         self.strict_overrides: list[str] = resolution.get("strict_overrides", [])
         self.is_paper = False
+        self.action_threshold = resolution.get("action_threshold", 0.15)
+        self.paper_action_threshold = paper.get("action_threshold", self.action_threshold)
 
     def aggregate(
         self,
@@ -123,6 +125,7 @@ class SignalAggregator:
     def _weighted_aggregate(
         self, symbol: str, price: float, results: list[StrategyResult]
     ) -> Signal:
+        threshold = self.paper_action_threshold if self.is_paper else self.action_threshold
         total_score = 0.0
         total_weight = 0.0
 
@@ -143,9 +146,9 @@ class SignalAggregator:
 
         normalized = total_score / total_weight
 
-        if normalized > 0.15:
+        if normalized > threshold:
             action = SignalAction.BUY
-        elif normalized < -0.15:
+        elif normalized < -threshold:
             action = SignalAction.SELL
         else:
             action = SignalAction.HOLD
