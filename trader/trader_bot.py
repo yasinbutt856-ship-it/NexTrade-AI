@@ -137,8 +137,10 @@ class TraderBot:
                     select(UserRecord).where(UserRecord.bot_active == True)
                 )
                 users = result.scalars().all()
+            print(f"DBG _refresh_users found={len(users)}", flush=True)
         except Exception as e:
             logger.error("user_refresh_error", error=str(e))
+            print(f"DBG _refresh_users ERROR={e}", flush=True)
             return
 
         current_ids = set(self.sessions.keys())
