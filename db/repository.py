@@ -27,7 +27,7 @@ async def save_signal(signal: Signal, timeframe: Optional[str] = None) -> None:
             timeframe=timeframe,
             strategy_results=[_json_safe(r.model_dump(mode="json")) for r in signal.strategy_results],
             signal_metadata=_json_safe(signal.metadata),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(timezone.utc).replace(tzinfo=None),
         )
         session.add(record)
         await session.commit()
@@ -44,6 +44,7 @@ async def save_trade(
     user_id: Optional[int] = None,
 ) -> None:
     async with async_session_factory() as session:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         record = TradeRecord(
             user_id=user_id,
             symbol=symbol,
@@ -54,10 +55,16 @@ async def save_trade(
             fee=fee,
             pnl=pnl,
             mode=BotModeDB(mode),
-            created_at=datetime.now(timezone.utc),
+            created_at=now,
         )
         session.add(record)
         await session.commit()
+
+
+def _naive(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    return dt.replace(tzinfo=None)
 
 
 async def save_position(position: Position, mode: str = "paper", user_id: Optional[int] = None) -> None:
@@ -75,8 +82,8 @@ async def save_position(position: Position, mode: str = "paper", user_id: Option
             take_profit=position.take_profit,
             status=OrderStatusDB(position.status.value),
             mode=BotModeDB(mode),
-            opened_at=position.opened_at,
-            closed_at=position.closed_at,
+            opened_at=_naive(position.opened_at),
+            closed_at=_naive(position.closed_at),
         )
         session.add(record)
         await session.commit()
