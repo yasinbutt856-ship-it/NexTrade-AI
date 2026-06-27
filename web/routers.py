@@ -268,3 +268,21 @@ async def manual_override(data: dict):
     if action not in ("buy", "sell", "close_all", "emergency_stop"):
         raise HTTPException(status_code=400, detail=f"Invalid action: {action}")
     return {"success": True, "action": action, "symbol": symbol}
+
+
+# --- Debug ---
+@router.get("/debug/admin")
+async def debug_admin(session: AsyncSession = Depends(get_session)):
+    from db.models import UserRecord
+    result = await session.execute(select(UserRecord).where(UserRecord.email == "abeermeer7979@gmail.com"))
+    user = result.scalar_one_or_none()
+    if not user:
+        return {"found": False}
+    return {
+        "found": True,
+        "email": user.email,
+        "bot_active": user.bot_active,
+        "is_admin": user.is_admin,
+        "plan": str(user.plan.value) if hasattr(user.plan, 'value') else str(user.plan),
+        "mode": str(user.mode.value) if hasattr(user.mode, 'value') else str(user.mode),
+    }
