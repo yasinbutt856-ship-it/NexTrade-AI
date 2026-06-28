@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-BseJUIpC.js";var t=e();function n({children:e,className:n=``,hover:r=!1}){return(0,t.jsx)(`div`,{className:`bg-dark-800 border border-dark-700 rounded-xl ${r?`hover:border-accent/30 transition-all`:``} ${n}`,children:e})}function r({children:e,className:n=``}){return(0,t.jsx)(`div`,{className:`p-5 ${n}`,children:e})}export{r as n,n as t};
