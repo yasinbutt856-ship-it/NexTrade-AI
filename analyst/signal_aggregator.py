@@ -18,6 +18,7 @@ class SignalAggregator:
         self._strategy_weights: dict[str, float] = {}
         for name, scfg in strategies_cfg.items():
             self._strategy_weights[name] = scfg.get("weight", 0.15)
+        self._dynamic_weights: dict[str, float] = {}
         resolution = config.get("signal_resolution", {})
         paper = resolution.get("paper", {})
         self.mode = resolution.get("mode", "weighted")
@@ -29,6 +30,9 @@ class SignalAggregator:
         self.is_paper = False
         self.action_threshold = resolution.get("action_threshold", 0.15)
         self.paper_action_threshold = paper.get("action_threshold", self.action_threshold)
+
+    def set_dynamic_weights(self, weights: dict[str, float]) -> None:
+        self._dynamic_weights = weights
 
     def aggregate(
         self,
@@ -130,7 +134,8 @@ class SignalAggregator:
         total_weight = 0.0
 
         for r in results:
-            weight = self._strategy_weights.get(r.strategy_name, 0.15) * r.confidence
+            base_w = self._dynamic_weights.get(r.strategy_name) or self._strategy_weights.get(r.strategy_name, 0.15)
+            weight = base_w * r.confidence
             total_score += ACTION_SCORE[r.action] * weight
             total_weight += weight
 

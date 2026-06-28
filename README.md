@@ -5,18 +5,25 @@
     <a href="https://mexc-trading-bot-production-c215.up.railway.app/health">
       <img src="https://img.shields.io/badge/backend-online-success?style=flat-square" alt="Backend">
     </a>
+    <a href="https://dist-rho-sandy-41.vercel.app">
+      <img src="https://img.shields.io/badge/frontend-deployed-blue?style=flat-square" alt="Frontend">
+    </a>
     <img src="https://img.shields.io/badge/python-3.12-blue?style=flat-square" alt="Python 3.12">
     <img src="https://img.shields.io/badge/react-19-61DAFB?style=flat-square" alt="React 19">
     <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square" alt="FastAPI">
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
     <img src="https://img.shields.io/badge/strategies-15-orange?style=flat-square" alt="15 Strategies">
-    <img src="https://img.shields.io/badge/tests-64%20passing-brightgreen?style=flat-square" alt="64 Tests Passing">
+    <img src="https://img.shields.io/badge/tests-55%20passing-brightgreen?style=flat-square" alt="55 Tests Passing">
   </p>
 </div>
+
+---
 
 ## Overview
 
 NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC, Binance, and Bybit** exchanges. It features an autonomous market analyst that generates signals across **40 trading pairs** using **15 strategies**, a multi-tenant trader that executes positions per user via Redis pub/sub, and a full SaaS web dashboard with JWT authentication, encrypted API key storage, and plan-based access control.
+
+The system has undergone a comprehensive safety audit against production failure scenarios: exchange credential errors, fake balance fallbacks, restart position recovery, SL/TP reconciliation, order ID traceability, and exchange-side fee extraction.
 
 ## Architecture
 
@@ -48,7 +55,7 @@ NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC
 ### Services
 
 | Service | Stack | Hosting |
-|---|---|---|
+|---------|-------|---------|
 | **Frontend** | React 19, TypeScript, Tailwind v4, Recharts | Vercel |
 | **Backend API** | FastAPI, SQLAlchemy (async), PostgreSQL, Redis | Railway |
 | **Analyst Bot** | Python, pandas_ta, ccxt, Redis pub/sub | Railway |
@@ -56,22 +63,37 @@ NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC
 | **Database** | PostgreSQL (prod) / SQLite (dev) | Railway |
 | **Cache** | Redis — signals, heartbeats, logs, rate limits | Railway |
 
+## Production Safety (Audited)
+
+All critical failure modes from independent code audits have been addressed:
+
+| Category | Fix |
+|----------|-----|
+| **Fake balance** | Replaced hardcoded `$10,000` with live `exchange.fetch_balance()` via `_get_live_balance()` |
+| **Restart recovery** | `recover_positions()` seeds `PositionTracker` from exchange on startup |
+| **SL/TP tracking** | `reconcile_positions()` live-diffs exchange positions vs local tracker every cycle |
+| **Order traceability** | UUIDv4 `clientOrderId` on every order; `exchange_order_id` column persisted to DB |
+| **Fee extraction** | Real fee from `create_order` response `fee.cost`; 0.1% fallback for paper mode |
+| **Credential errors** | All 3 exchange clients surface actual error messages (no silent bare `except`) |
+| **Min notional** | `_validate_order()` rejects orders below `$5` notional |
+| **Hard cap** | 50 concurrent position limit enforced |
+| **Balance snapshots** | Per-user equity tracked to Redis every 15 seconds |
+| **Circuit breaker** | Drawdown-based trading halt in `RiskManager` |
+
 ## Features
 
 ### Trading Engine
 - **15 strategies**: RSI, MACD cross, EMA trend, Volume breakout, Bollinger squeeze, Supertrend, ADX, Ichimoku, Pullback, Range, CounterTrend, StochRSI, PSAR, MFI, VWAP
-- **Paper/live signal thresholds**: paper needs 1 signal at 30% confidence, live needs 2 signals at 50% confidence
 - **Multi-timeframe analysis**: 15m, 1h, 4h with configurable signal resolution
 - **Paper trading** with realistic fill simulation (slippage, spread)
 - **Live trading** via MEXC, Binance, Bybit (spot + futures)
-- **Risk management**: max position size, daily drawdown limits, circuit breaker, cooldown
+- **Risk management**: max position size, daily drawdown limits, circuit breaker, cooldown, configurable leverage
 - **Per-user positions, signals, and trade history** stored in PostgreSQL
 
 ### SaaS Platform
 - **JWT authentication** with bcrypt password hashing (24h token expiry)
 - **Three subscription tiers**: Basic ($29), Pro ($79), Enterprise ($199)
 - **Plan enforcement**: per-tier limits on pairs, bots, position size, and trade type
-- **Multi-exchange**: MEXC, Binance, Bybit via factory pattern with per-exchange client classes
 - **Encrypted API key storage**: Fernet AES-256 at rest
 - **Multi-tenant trader**: shared executor with per-user isolated sessions
 - **Stripe subscription management**: checkout, webhook, billing portal, plan sync
@@ -90,15 +112,14 @@ NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC
 - **CSV export**: streaming CSV for trades and positions
 
 ### Platform Features
-- **Code splitting**: All routes lazily loaded via `React.lazy` + `Suspense` — largest chunk 336KB
-- **Dark/light mode**: `ThemeContext` with localStorage persistence, toggle in navbar
-- **Toast notifications**: auto-dismiss (4s), 4 types (success/error/info/warning), animated
-- **Loading skeletons**: `Skeleton`, `TableSkeleton`, `CardSkeleton` across all pages
+- **Code splitting**: All routes lazily loaded via `React.lazy` + `Suspense`
+- **Dark/light mode**: `ThemeContext` with localStorage persistence
+- **Toast notifications**: auto-dismiss (4s), 4 types, animated
+- **Loading skeletons**: `Skeleton`, `TableSkeleton`, `CardSkeleton`
 - **Error boundaries**: `ErrorBoundary` wrapping all routes with retry button
 - **Sortable tables**: `SortableTable<T>` with click-to-sort headers
 - **Real-time updates**: WebSocket endpoint (`/ws`) with JWT auth + REST polling fallback
 - **Free trial**: trial period per user with expiry enforcement
-- **Usage tracking**: API calls, bot hours, trade volume per user
 
 ### Account Features
 - **Crypto wallet auth**: SIWE (EIP-4361) for EVM (MetaMask) + Solana (Phantom)
@@ -107,27 +128,19 @@ NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC
 - **Withdrawal protection**: address whitelist + time-delayed withdrawals
 - **User API keys**: generate/revoke keys for programmatic API access
 - **GDPR compliance**: data export (full JSON) + account deletion
-- **Notification preferences**: email/telegram/push toggles per user
-- **Custom trading pairs**: per-user pair selection (10 pairs)
 - **Backtesting UI**: pair + strategy + period selectors
 - **Admin analytics**: user growth, plan breakdown, active bots, total P&L
 
 ### Trust & Transparency
 - **Real social proof**: Landing page displays live user count and total trades from DB
-- **Terms of Service** (`/terms`): 9 sections covering all legal terms — NexTrade AI Ltd., Larnaca, Cyprus
-- **Privacy Policy** (`/privacy`): AES-256 encryption, no data selling, encrypted API key storage
-- **Whitepaper** (`/whitepaper`): Deep-dive on all 15 strategies, architecture (Redis pub/sub), risk management
-- **Security** (`/security`): 8 sections — AES-256, zero-knowledge, multi-tenant isolation, circuit breaker
-- **Changelog** (`/changelog`): Release timeline (v1.0.0 → v1.2.0)
-- **About** (`/about`): Company info, development timeline, team, architecture overview
-- **Support**: Email link (support@nextrade.ai) in navbar and footer
-- **Company footer**: Registered company name, jurisdiction, contact info on all pages
+- **Terms of Service**, **Privacy Policy**, **Whitepaper**, **Security**, **Changelog**, **About** pages
+- **Registered company**: NexTrade AI Ltd., Larnaca, Cyprus
 - **SLA commitment**: Best-effort uptime across all plans
 
 ## Subscription Plans
 
 | Feature | Basic ($29) | Pro ($79) | Enterprise ($199) |
-|---|---|---|---|
+|---------|------------|-----------|-------------------|
 | Concurrent bots | 1 | 3 | Unlimited |
 | Trading pairs | 3 | 10 | Unlimited |
 | Max position | $500 | $5,000 | Unlimited |
@@ -148,226 +161,52 @@ NexTrade AI is a production-grade algorithmic trading platform supporting **MEXC
 ```bash
 git clone https://github.com/abeermeer/Nextrade-trading-bot.git
 cd mexc-trading-bot
-
-# Python virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate     # Windows
-pip install -r requirements.txt
-pip install -e .
-
-# Frontend
-cd frontend
-npm install
-cd ..
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+pip install -r requirements.txt && pip install -e .
+cd frontend && npm install && cd ..
 ```
 
 ### 2. Configure
 
 ```bash
-# Required: Exchange API credentials (MEXC, Binance, or Bybit)
 cp config/.env.example config/.env
-# Edit config/.env with your keys
-
-# Optional: Override via environment variables
-export JWT_SECRET="your-jwt-secret"
-export ENCRYPTION_KEY="your-fernet-key"
-export DATABASE_URL="postgresql+asyncpg://user:pass@host:5432/db"
-export REDIS_URL="redis://:password@host:6379"
+# Edit config/.env with your exchange API keys
 ```
 
 ### 3. Run
 
 ```bash
-# Start Redis (if not running)
-docker-compose up redis -d
-
-# Start backend
-uvicorn web.main:app --reload --port 8000
-
-# Start analyst (separate terminal)
-python scripts/run_analyst.py
-
-# Start trader (separate terminal)
-python scripts/run_trader.py
-
-# Start frontend dev server (separate terminal)
-cd frontend && npm run dev
-```
-
-### Vercel Frontend Deploy
-
-```bash
-cd frontend && npm run build && Copy-Item vercel.json dist\ && vercel deploy dist --prod --yes
-```
-
-**Important**: `vercel.json` MUST be copied into `dist/` before deploy, because `vercel deploy dist` treats `dist/` as the root.
-
-### Docker
-
-```bash
+# Start all services (requires Docker)
 docker-compose up --build
-```
 
-This starts Redis, backend (FastAPI), analyst, and trader services.
-
-### Railway (Production)
-
-The system runs as 3 separate services on Railway:
-1. **web** — FastAPI dashboard (Dockerfile.web)
-2. **analyst** — Signal generation (Dockerfile.analyst)
-3. **trader** — Multi-tenant trade executor (Dockerfile.trader)
-
-**Critical**: The Railway Redis Plugin MUST be attached to ALL 3 services so they share the same Redis instance. Without this, the analyst publishes signals to one Redis and the trader subscribes to another — resulting in 0 trades.
-
-## API Reference
-
-The backend exposes a REST API at `/api/*`. All authenticated endpoints require `Authorization: Bearer <token>`.
-
-### Public Endpoints
-| Method | Path | Description |
-|---|---|---|
-| GET | `/health` | Health check |
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | Login, returns JWT |
-| POST | `/api/auth/wallet-nonce` | Get SIWE message to sign (for wallet auth) |
-| POST | `/api/auth/wallet-login` | Sign in with crypto wallet (EVM/Solana) |
-| POST | `/api/auth/wallet-link` | Link wallet to existing email account |
-| POST | `/api/auth/forgot-password` | Request password reset email |
-| POST | `/api/auth/reset-password` | Reset password with token |
-| GET | `/verify-email` | Verify email with token |
-| GET | `/api/stats` | Live platform stats (user count, total trades, win rate) |
-| POST | `/api/subscribe/create-checkout` | Create Stripe checkout session (requires auth) |
-| POST | `/api/subscribe/webhook` | Stripe webhook — sync subscription changes |
-| GET | `/api/subscribe/portal` | Get Stripe billing portal URL |
-| GET | `/api/subscribe/current` | Get current subscription + available plans |
-
-### User Endpoints (authenticated)
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/status` | Bot + analyst health |
-| GET | `/api/signals` | Recent trading signals |
-| GET | `/api/positions` | Open positions |
-| GET | `/api/trades` | Trade history |
-| GET | `/api/performance` | P&L, win rate, equity curve |
-| GET | `/api/strategy-performance` | Per-strategy win rate, P&L, signal count |
-| GET | `/api/portfolio` | Aggregate P&L, pair breakdown, unrealized P&L |
-| GET | `/api/logs` | Real-time bot logs |
-| GET | `/api/trades/export` | CSV export — trades |
-| GET | `/api/positions/export` | CSV export — positions |
-| POST | `/api/backtest` | Run backtest simulation |
-| WS | `/ws` | WebSocket real-time updates (JWT auth) |
-| GET | `/api/auth/me` | Current user profile (authenticated) |
-| PUT | `/api/user/exchange-keys` | Save & validate keys for any exchange (MEXC/Binance/Bybit) |
-| PUT | `/api/user/settings` | Update mode, trade type, position limit |
-| POST | `/api/user/bot` | Start/stop bot via Redis pub/sub |
-| GET | `/api/user/bot/status` | Bot configuration status |
-| PUT | `/api/user/wallet` | Save/connect crypto wallet (sig verified) |
-| GET | `/api/user/wallet` | Get connected wallet info |
-| DELETE | `/api/user/wallet` | Disconnect wallet |
-| GET | `/api/user/selected-pairs` | Get user's selected trading pairs |
-| PUT | `/api/user/selected-pairs` | Update selected trading pairs |
-| GET | `/api/user/notification-prefs` | Get notification preferences |
-| PUT | `/api/user/notification-prefs` | Update notification preferences |
-| POST | `/api/user/api-keys` | Generate new API key |
-| GET | `/api/user/api-keys` | List API keys |
-| DELETE | `/api/user/api-keys/:id` | Revoke API key |
-| GET | `/api/user/usage` | Get usage stats (API calls, bot hours, volume) |
-| GET | `/api/user/trial-status` | Get trial status + expiry |
-| GET | `/api/user/data-export` | GDPR: export all user data as JSON |
-| DELETE | `/api/user/data-delete` | GDPR: anonymize and delete user data |
-| GET | `/api/user/wallet/withdrawal-settings` | Get withdrawal delay hours |
-| PUT | `/api/user/wallet/withdrawal-settings` | Update withdrawal delay |
-| GET | `/api/user/wallet/whitelist` | List whitelisted withdrawal addresses |
-| POST | `/api/user/wallet/whitelist` | Add address to whitelist |
-| DELETE | `/api/user/wallet/whitelist/:id` | Remove address from whitelist |
-
-### Admin Endpoints (admin only)
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/user/admin/users` | List all users with plan/status/key info |
-| GET | `/api/user/admin/analytics` | User growth (6mo), plan breakdown, active bots, total P&L |
-| GET | `/api/user/admin/whitelist` | List all pending withdrawal approvals |
-| POST | `/api/user/admin/whitelist/:id/approve` | Approve withdrawal address |
-
-## Project Structure
-
-```
-├── analyst/                 # Market analyst — signal generation
-│   ├── analyst_bot.py       # Main loop, strategy orchestration
-│   └── strategies/          # 15 strategy implementations
-├── backtest/                # Backtesting framework
-├── config/                  # YAML configuration files
-│   ├── settings.yaml        # Bot/trader/analyst/redis config
-│   └── strategies.yaml      # Strategy parameters
-├── db/                      # Database layer
-│   ├── database.py          # Async SQLAlchemy engine + sessions
-│   ├── models.py            # UserRecord, SignalRecord, etc.
-│   └── repository.py        # CRUD helpers
-├── frontend/                # React 19 SPA
-│   ├── src/
-│   │   ├── pages/           # Landing, Dashboard, Settings, Admin, etc.
-│   │   ├── components/      # Navbar, WalletConnect, HeroIllustration, ErrorBoundary, PageTransition
-│   │   │   └── ui/          # Card, Badge, Table (SortableTable), Skeleton
-│   │   ├── api/client.ts    # Full API client (25+ methods)
-│   │   ├── context/         # AuthContext, ThemeContext, ToastContext
-│   │   ├── hooks/           # useWebSocket (exponential backoff)
-│   │   └── types/           # TypeScript interfaces
-├── shared/                  # Shared modules
-│   ├── models.py            # Pydantic models
-│   ├── redis_client.py      # Redis pub/sub + lists + KV
-│   ├── encryption.py        # Fernet AES-256 encrypt/decrypt
-│   ├── plan_limits.py       # Per-plan limits + enforcement
-│   ├── wallet.py            # SIWE nonce + EVM/Solana signature verification
-│   └── rate_limiter.py      # Token bucket rate limiter
-├── tests/                   # 64 passing tests
-├── trader/                  # Multi-tenant trade executor
-│   ├── trader_bot.py        # Main loop, UserSession management
-│   ├── paper_engine.py      # Simulated trading engine
-│   ├── risk_manager.py      # Position sizing, drawdown, circuit breaker
-│   ├── position_tracker.py
-│   ├── notifier.py          # Telegram + Email alerts
-│   └── exchange/            # Exchange clients — MEXC, Binance, Bybit (base + factory)
-├── web/                     # FastAPI web backend
-│   ├── main.py              # App factory + RateLimitMiddleware + WebSocket /ws
-│   ├── auth.py              # bcrypt + JWT utilities
-│   ├── auth_router.py       # Register/login/me/verify/reset + admin seed
-│   ├── wallet_router.py     # Wallet auth (nonce, login, link)
-│   ├── withdrawal_router.py # Withdrawal whitelist CRUD + admin approval
-│   ├── user_router.py       # User settings, exchange keys, bot control, admin
-│   ├── platform_router.py   # Strategy perf, portfolio, CSV, GDPR, pairs, notifs, API keys, analytics, trial, backtest, usage
-│   ├── main.py              # Stripe checkout, webhook, portal, current
-│   └── routers.py           # Status, signals, positions, trades, logs, stats
-├── docker-compose.yml       # Local dev setup
-├── Dockerfile.web            # Backend container
-├── Dockerfile.analyst        # Analyst container
-├── Dockerfile.trader         # Trader container
-├── requirements.txt          # Python dependencies
-└── pyproject.toml            # Project metadata + tool config
+# Or run individually:
+# Terminal 1: uvicorn web.main:app --reload --port 8000
+# Terminal 2: python scripts/run_analyst.py
+# Terminal 3: python scripts/run_trader.py
+# Terminal 4: cd frontend && npm run dev
 ```
 
 ## Testing
 
 ```bash
-# Run all 64 tests
-uv run pytest tests/ -v
+# Run backend tests
+pytest tests/ -v
 
 # With coverage
-uv run pytest tests/ --cov=. --cov-report=term
+pytest tests/ --cov=. --cov-report=term
 ```
 
 ## Deployment
 
-The system is designed for a three-platform deployment:
-
-| Component | Platform | Deployment |
-|---|---|---|
-| Frontend | **Vercel** | `vercel deploy dist --prod` from `frontend\dist` after build |
-| Backend API | **Railway** | Auto-deploys from GitHub master branch |
-| Analyst Bot | **Railway** | Auto-deploys from GitHub master branch |
-| Trader Bot | **Railway** | Auto-deploys from GitHub master branch |
-| PostgreSQL | **Railway** | Managed add-on |
-| Redis | **Railway** | Managed add-on |
+| Component | Platform | Method |
+|-----------|----------|--------|
+| Frontend | **Vercel** | `cd frontend && npm run build && vercel deploy dist --prod` |
+| Backend API | **Railway** | Auto-deploys from GitHub master via Dockerfile.web |
+| Analyst Bot | **Railway** | Auto-deploys from GitHub master via Dockerfile.analyst |
+| Trader Bot | **Railway** | Auto-deploys from GitHub master via Dockerfile.trader |
+| PostgreSQL | **Railway** | Managed add-on, shared across all services via `DATABASE_URL` |
+| Redis | **Railway** | Managed add-on, must be attached to all 3 services |
 
 ## License
 

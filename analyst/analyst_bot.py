@@ -8,6 +8,7 @@ from analyst.indicator_calculator import IndicatorCalculator
 from analyst.pair_selector import PairSelector
 from analyst.signal_aggregator import SignalAggregator
 from analyst.strategy_runner import StrategyRunner
+from analyst.strategy_scorer import StrategyScorer
 from db.repository import save_signal
 from shared.config_loader import ConfigLoader
 from shared.logger import get_logger
@@ -38,6 +39,13 @@ class AnalystBot:
         self.indicator_calculator = IndicatorCalculator(analyst_cfg)
         self.strategy_runner = StrategyRunner(self.strategies_config)
         self.signal_aggregator = SignalAggregator(self.strategies_config)
+        self.strategy_scorer = StrategyScorer(
+            settings=self.settings,
+            strategies_config=self.strategies_config,
+            redis=self.redis,
+            data_fetcher=self.data_fetcher,
+            indicator_calculator=self.indicator_calculator,
+        )
 
         self.timeframes: list[str] = analyst_cfg.get("timeframes", ["15m", "1h", "4h"])
         self.signal_interval = analyst_cfg.get("signal_interval_seconds", 300)
@@ -63,11 +71,13 @@ class AnalystBot:
 
         heartbeat_task = asyncio.create_task(self._heartbeat_loop())
         signal_task = asyncio.create_task(self._signal_loop())
+        scorer_task = asyncio.create_task(self.strategy_scorer.score_loop())
 
-        await asyncio.gather(heartbeat_task, signal_task)
+        await asyncio.gather(heartbeat_task, signal_task, scorer_task)
 
     async def stop(self) -> None:
         self._running = False
+        self.strategy_scorer.stop()
         await self.redis.disconnect()
         await self.pair_selector.close()
         logger.info("analyst_bot_stopped")
@@ -101,6 +111,9 @@ class AnalystBot:
             await asyncio.sleep(self.signal_interval)
 
     async def _analyze_and_publish(self) -> None:
+        dynamic_weights = await self.strategy_scorer.get_dynamic_weights()
+        self.signal_aggregator.set_dynamic_weights(dynamic_weights)
+
         pairs = await self.pair_selector.select_pairs()
         logger.info("analysis_started", pair_count=len(pairs), timeframes=self.timeframes)
 
@@ -117,6 +130,9 @@ class AnalystBot:
                 logger.warning("no_data", symbol=symbol, timeframe=timeframe)
                 return
 
+            current_price = float(df["close"].iloc[-1])
+            await self.strategy_scorer.check_accuracy(symbol, timeframe, current_price)
+
             df = self.indicator_calculator.calculate_all(df)
             if df.empty:
                 return
@@ -125,7 +141,6 @@ class AnalystBot:
             if not strategy_results:
                 return
 
-            current_price = float(df["close"].iloc[-1])
             is_paper = self.settings.get("bot", {}).get("mode", "live") == "paper"
             signal = self.signal_aggregator.aggregate(
                 symbol=symbol,
@@ -148,6 +163,8 @@ class AnalystBot:
                 await save_signal(signal, timeframe)
             except Exception as e:
                 logger.error("db_save_signal_error", error=str(e))
+
+            await self.strategy_scorer.record_strategy_votes(symbol, timeframe, strategy_results, current_price)
 
             logger.info(
                 "signal_published",

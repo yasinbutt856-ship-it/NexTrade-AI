@@ -3,6 +3,7 @@ from analyst.indicator_calculator import IndicatorCalculator
 from analyst.pair_selector import PairSelector
 from analyst.signal_aggregator import SignalAggregator
 from analyst.strategy_runner import StrategyRunner
+from analyst.strategy_scorer import StrategyScorer
 from analyst.analyst_bot import AnalystBot
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "PairSelector",
     "SignalAggregator",
     "StrategyRunner",
+    "StrategyScorer",
     "AnalystBot",
 ]

@@ -21,6 +21,18 @@ analyst:
   signal_interval_seconds: 300  # 5 min between signal generation cycles
   max_pairs_to_analyze: 40
   heartbeat_interval_seconds: 30
+  scorer:
+    enabled: true
+    backtest_interval_hours: 6
+    backtest_pairs:
+      - BTC/USDT
+      - ETH/USDT
+      - SOL/USDT
+    backtest_period: 1mo
+    backtest_timeframes:
+      - 1h
+    backtest_weight: 0.7
+    accuracy_weight: 0.3
 
 trader:
   max_position_size_usdt: 1000
