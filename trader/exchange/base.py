@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 from typing import Optional
 from shared.models import OrderSide, OrderType
 from shared.rate_limiter import RateLimiter
@@ -6,6 +7,42 @@ from shared.rate_limiter import RateLimiter
 
 class BaseExchangeClient(ABC):
     rate_limiter: RateLimiter
+    _markets_loaded: bool = False
+
+    @abstractmethod
+    async def load_markets(self) -> None:
+        ...
+
+    @abstractmethod
+    async def _get_market(self, symbol: str, market_type: str) -> Optional[dict]:
+        ...
+
+    async def _ensure_markets_loaded(self) -> None:
+        if not self._markets_loaded:
+            await self.load_markets()
+            self._markets_loaded = True
+
+    def round_amount(self, symbol: str, amount: float) -> float:
+        market = self._get_market(symbol, "spot") or self._get_market(symbol, "swap")
+        if not market:
+            return amount
+        precision = market.get("precision", {})
+        amount_precision = precision.get("amount", 8)
+        if isinstance(amount_precision, int):
+            return float(Decimal(str(amount)).quantize(Decimal(10) ** -amount_precision, rounding=ROUND_DOWN))
+        return amount
+
+    def round_price(self, symbol: str, price: Optional[float]) -> Optional[float]:
+        if price is None:
+            return None
+        market = self._get_market(symbol, "spot") or self._get_market(symbol, "swap")
+        if not market:
+            return price
+        precision = market.get("precision", {})
+        price_precision = precision.get("price", 8)
+        if isinstance(price_precision, int):
+            return float(Decimal(str(price)).quantize(Decimal(10) ** -price_precision, rounding=ROUND_HALF_UP))
+        return price
 
     @abstractmethod
     async def validate_credentials(self) -> dict:

@@ -23,6 +23,23 @@ class BybitClient(BaseExchangeClient):
         self._api_key = api_key
         self._api_secret = api_secret
         self._use_sandbox = use_sandbox
+        self._markets: dict[str, dict] = {}
+
+    async def load_markets(self) -> None:
+        spot = await self._get_spot()
+        await spot.load_markets()
+        for symbol, market in spot.markets.items():
+            self._markets[symbol] = market
+        try:
+            fut = await self._get_futures()
+            await fut.load_markets()
+            for symbol, market in fut.markets.items():
+                self._markets[symbol] = market
+        except Exception:
+            pass
+
+    def _get_market(self, symbol: str, market_type: str = "spot") -> Optional[dict]:
+        return self._markets.get(symbol)
 
     async def _get_spot(self) -> ccxt.Exchange:
         if self._spot is None:
@@ -94,9 +111,13 @@ class BybitClient(BaseExchangeClient):
     ) -> dict:
         ex = await self._get_spot() if market == "spot" else await self._get_futures()
         await self.rate_limiter.acquire()
+        await self._ensure_markets_loaded()
 
         ccxt_side = side.value
         ccxt_type = "market" if order_type == OrderType.MARKET else "limit"
+
+        qty_rounded = self.round_amount(symbol, quantity)
+        price_rounded = self.round_price(symbol, price)
 
         params: dict = {}
         if client_order_id:
@@ -111,8 +132,8 @@ class BybitClient(BaseExchangeClient):
             symbol=symbol,
             side=side.value,
             type=ccxt_type,
-            qty=quantity,
-            price=price,
+            qty=qty_rounded,
+            price=price_rounded,
             market=market,
         )
 
@@ -120,8 +141,8 @@ class BybitClient(BaseExchangeClient):
             symbol=symbol,
             type=ccxt_type,
             side=ccxt_side,
-            amount=quantity,
-            price=price,
+            amount=qty_rounded,
+            price=price_rounded,
             params=params,
         )
         return order

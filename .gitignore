@@ -39,6 +39,10 @@ frontend/.netlify/
 # Docker
 .docker/
 
+# Local docs (not pushed to remote)
+AGENTS.md
+SESSION_SUMMARY.md
+
 # Coverage
 htmlcov/
 .coverage

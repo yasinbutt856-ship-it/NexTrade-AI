@@ -78,6 +78,11 @@ class UserSession:
             if result.get("spot_ok") or result.get("futures_ok"):
                 self._exchange_created = True
                 logger.info("exchange_validated", user=self.user_id, spot=result.get("spot_ok"), futures=result.get("futures_ok"))
+                try:
+                    await self.exchange.load_markets()
+                    logger.info("markets_loaded", user=self.user_id)
+                except Exception as e:
+                    logger.warning("markets_load_error", user=self.user_id, error=str(e))
                 await self.recover_positions()
                 return True
             logger.warning("exchange_validation_failed", user=self.user_id, result=result)
@@ -136,6 +141,14 @@ class UserSession:
                     exit_price = pos.current_price or pos.entry_price
                     self.position_tracker.close_position(symbol, exit_price, "exchange_closed")
                     logger.info("position_reconciled_closed", user=self.user_id, symbol=symbol, price=exit_price, pnl=pos.realized_pnl)
+                    try:
+                        await save_trade(
+                            symbol=symbol, side="sell", price=exit_price, quantity=pos.quantity,
+                            fee=0.001 * exit_price * pos.quantity, pnl=pos.realized_pnl,
+                            mode=self.mode.value, user_id=self.user_id,
+                        )
+                    except Exception as e:
+                        logger.error("db_save_trade_error_reconciliation", user=self.user_id, symbol=symbol, error=str(e))
             new_on_exchange = exchange_symbols - local_symbols
             for symbol in new_on_exchange:
                 logger.info("position_found_on_exchange", user=self.user_id, symbol=symbol)
@@ -386,7 +399,7 @@ class TraderBot:
             total_equity = session.paper_engine.get_total_equity(market_prices)
             session.risk_manager.update_balance(total_equity)
 
-        can_trade, reason = session.risk_manager.can_trade(symbol)
+        can_trade, reason = session.risk_manager.can_trade(symbol, open_symbols=session.position_tracker.get_all_open_symbols())
         if not can_trade:
             logger.warning("trade_blocked", user=session.user_id, symbol=symbol, reason=reason)
             return
@@ -452,6 +465,8 @@ class TraderBot:
         sl_pct = 1.5
         tp_pct = 5.0
         stop_loss = price * (1 - sl_pct / 100)
+        if stop_loss <= 0:
+            stop_loss = 0.0
         take_profit = price * (1 + tp_pct / 100)
 
         if session.mode == BotMode.PAPER:
@@ -471,8 +486,8 @@ class TraderBot:
                 try:
                     leverage = self.settings.get("trader", {}).get("leverage", 10)
                     await session.exchange.set_leverage(symbol, leverage)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("set_leverage_error", user=session.user_id, symbol=symbol, error=str(e))
             client_id = str(uuid.uuid4())
             result = await session.exchange.create_order(
                 symbol=symbol, side=OrderSide.BUY, order_type=OrderType.MARKET,

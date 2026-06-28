@@ -13,7 +13,7 @@
     <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square" alt="FastAPI">
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
     <img src="https://img.shields.io/badge/strategies-15-orange?style=flat-square" alt="15 Strategies">
-    <img src="https://img.shields.io/badge/tests-49%20passing-brightgreen?style=flat-square" alt="49 Tests Passing">
+    <img src="https://img.shields.io/badge/tests-64%20passing-brightgreen?style=flat-square" alt="64 Tests Passing">
   </p>
 </div>
 
@@ -89,6 +89,11 @@ All critical failure modes from independent code audits have been addressed:
 | **Hard cap** | 50 concurrent position limit enforced |
 | **Balance snapshots** | Per-user equity tracked to Redis every 15 seconds |
 | **Circuit breaker** | Drawdown-based trading halt in `RiskManager` |
+| **Precision rounding** | Amounts and prices rounded to exchange precision via `load_markets()` before every order |
+| **Correlation cap** | `RiskManager` limits correlated positions (max 2 per group: BTC/ETH, L1s, DeFi, memes, infra) |
+| **Edge case protection** | Stop-loss defaults to `0.0` if calculated value out of range (negative/zero price) |
+| **Position reconciliation** | Live-diff against exchange positions each cycle; DB trade record persisted when exchange closes a position |
+| **Docker resiliency** | `restart: unless-stopped` + healthchecks on all 4 services (Redis ping, backend HTTP, analyst/trader Redis) |
 
 ## Features
 

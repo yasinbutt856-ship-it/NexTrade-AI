@@ -3,6 +3,7 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -15,6 +16,7 @@ services:
       dockerfile: Dockerfile.web
     ports:
       - "8000:8000"
+    restart: unless-stopped
     environment:
       - PORT=8000
       - REDIS_URL=redis://redis:6379
@@ -26,6 +28,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     volumes:
       - ./data:/app/data
 
@@ -33,6 +41,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.analyst
+    restart: unless-stopped
     environment:
       - REDIS_URL=redis://redis:6379
       - MEXC_API_KEY=${MEXC_API_KEY}
@@ -40,11 +49,18 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import redis; redis.Redis.from_url('redis://redis:6379').ping()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   trader:
     build:
       context: .
       dockerfile: Dockerfile.trader
+    restart: unless-stopped
     environment:
       - REDIS_URL=redis://redis:6379
       - MEXC_API_KEY=${MEXC_API_KEY}
@@ -52,3 +68,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import redis; redis.Redis.from_url('redis://redis:6379').ping()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

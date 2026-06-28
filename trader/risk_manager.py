@@ -4,6 +4,23 @@ from shared.logger import get_logger
 
 logger = get_logger(__name__)
 
+CORRELATION_GROUPS: dict[str, set[str]] = {
+    "btc_eth": {"BTC/USDT", "ETH/USDT", "BTCUSDT", "ETHUSDT"},
+    "major_l1": {"SOL/USDT", "BNB/USDT", "XRP/USDT", "ADA/USDT", "AVAX/USDT", "DOT/USDT",
+                 "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "AVAXUSDT", "DOTUSDT"},
+    "defi": {"UNI/USDT", "LINK/USDT", "AAVE/USDT", "CRV/USDT", "UNIUSDT", "LINKUSDT", "AAVEUSDT", "CRVUSDT"},
+    "meme": {"DOGE/USDT", "SHIB/USDT", "PEPE/USDT", "DOGEUSDT", "SHIBUSDT", "PEPEUSDT"},
+    "infra": {"LTC/USDT", "ATOM/USDT", "FIL/USDT", "NEAR/USDT", "TRX/USDT",
+              "LTCUSDT", "ATOMUSDT", "FILUSDT", "NEARUSDT", "TRXUSDT"},
+}
+
+
+def _get_correlation_group(symbol: str) -> Optional[str]:
+    for group_name, members in CORRELATION_GROUPS.items():
+        if symbol in members:
+            return group_name
+    return None
+
 
 class RiskManager:
     def __init__(
@@ -13,12 +30,14 @@ class RiskManager:
         circuit_breaker_drawdown_pct: float = 10.0,
         cooldown_seconds: int = 300,
         initial_balance: float = 10000.0,
+        max_correlation_exposure: int = 2,
     ):
         self.max_position_size_usdt = max_position_size_usdt
         self.max_daily_drawdown_pct = max_daily_drawdown_pct
         self.circuit_breaker_drawdown_pct = circuit_breaker_drawdown_pct
         self.cooldown_seconds = cooldown_seconds
         self.initial_balance = initial_balance
+        self.max_correlation_exposure = max_correlation_exposure
         self.peak_balance = initial_balance
         self._circuit_breaker_active = False
         self._cooldowns: dict[str, datetime] = {}
@@ -54,7 +73,7 @@ class RiskManager:
         else:
             self._circuit_breaker_active = False
 
-    def can_trade(self, symbol: str) -> tuple[bool, str]:
+    def can_trade(self, symbol: str, open_symbols: Optional[set[str]] = None) -> tuple[bool, str]:
         now = datetime.now(timezone.utc)
 
         if self._circuit_breaker_active:
@@ -74,6 +93,13 @@ class RiskManager:
         if last_trade and (now - last_trade).total_seconds() < self.cooldown_seconds:
             remaining = self.cooldown_seconds - (now - last_trade).total_seconds()
             return False, f"Cooldown active for {symbol}: {remaining:.0f}s remaining"
+
+        if open_symbols and self.max_correlation_exposure > 0:
+            symbol_group = _get_correlation_group(symbol)
+            if symbol_group:
+                group_count = sum(1 for s in open_symbols if _get_correlation_group(s) == symbol_group)
+                if group_count >= self.max_correlation_exposure:
+                    return False, f"Correlation cap reached for group '{symbol_group}': {group_count} positions (max {self.max_correlation_exposure})"
 
         return True, "ok"
 
