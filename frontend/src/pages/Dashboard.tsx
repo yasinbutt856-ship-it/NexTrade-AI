@@ -85,17 +85,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-dark-950">
       <AppNavbar />
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
-        {/* Header */}
+        {/* Header + Bot Communication */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-lg font-semibold">Dashboard</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`inline-block w-1.5 h-1.5 rounded-full ${analystAlive ? "bg-positive" : "bg-dark-500"}`} />
-              <span className="text-xs text-gray-600">Analyst {analystAlive ? "online" : "offline"}</span>
-              <span className="text-gray-700 mx-1">·</span>
-              <span className={`inline-block w-1.5 h-1.5 rounded-full ${traderAlive ? "bg-positive" : "bg-dark-500"}`} />
-              <span className="text-xs text-gray-600">Trader {traderAlive ? "online" : "offline"}</span>
-            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex bg-dark-800 rounded-lg p-0.5 border border-dark-700">
@@ -123,6 +116,109 @@ export default function Dashboard() {
                   {m}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bot Communication Visualization */}
+        <div className="grid grid-cols-12 gap-4 items-center">
+          {/* Analyst */}
+          <div className="col-span-5">
+            <div className={`relative rounded-2xl border p-5 transition-all ${
+              analystAlive
+                ? "bg-dark-800/80 border-accent/30 shadow-lg shadow-accent/5"
+                : "bg-dark-800/40 border-dark-700/50 opacity-60"
+            }`}>
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                  analystAlive
+                    ? "bg-accent/15 border border-accent/20"
+                    : "bg-dark-700 border border-dark-600"
+                }`}>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={analystAlive ? "#f59e0b" : "#525252"} strokeWidth="1.5">
+                    <path d="M12 4a4 4 0 100 8 4 4 0 000-8z" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M17 9l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold">Analyst</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${analystAlive ? "bg-accent animate-pulse" : "bg-dark-500"}`} />
+                    <span className={`text-xs ${analystAlive ? "text-accent" : "text-gray-600"}`}>
+                      {analystAlive ? "Active" : "Offline"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2 text-[10px] text-gray-600">
+                <span className={`px-1.5 py-0.5 rounded ${analystAlive ? "bg-accent/10 text-accent" : "bg-dark-700 text-gray-600"}`}>15 strategies</span>
+                <span>scanning 4 timeframes</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Middle: connection + trading status */}
+          <div className="col-span-2 flex flex-col items-center gap-2">
+            <div className="flex items-center gap-1">
+              <div className={`w-1 h-1 rounded-full ${analystAlive ? "bg-accent" : "bg-dark-600"} transition-all ${analystAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+              <div className={`w-6 h-0.5 rounded-full ${analystAlive ? "bg-accent/60" : "bg-dark-600"}`} />
+              <div className={`w-1 h-1 rounded-full ${traderAlive ? "bg-positive" : "bg-dark-600"} transition-all ${traderAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+            </div>
+            <div className={`rounded-xl px-4 py-2 text-center border transition-all ${
+              botActive
+                ? "bg-accent/10 border-accent/25"
+                : "bg-dark-800/60 border-dark-700"
+            }`}>
+              <div className={`text-xs font-semibold ${botActive ? "text-accent" : "text-gray-500"}`}>
+                {botActive ? "Trading" : "Idle"}
+              </div>
+              <div className={`text-[10px] ${botActive ? "text-accent/70" : "text-gray-600"}`}>
+                {botMode === "paper" ? "Paper" : "Live"}
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className={`w-1 h-1 rounded-full ${traderAlive ? "bg-positive" : "bg-dark-600"} transition-all ${traderAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+              <div className={`w-6 h-0.5 rounded-full ${traderAlive ? "bg-positive/60" : "bg-dark-600"}`} />
+              <div className={`w-1 h-1 rounded-full ${analystAlive ? "bg-accent" : "bg-dark-600"} transition-all ${analystAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+            </div>
+          </div>
+
+          {/* Trader */}
+          <div className="col-span-5">
+            <div className={`relative rounded-2xl border p-5 transition-all ${
+              traderAlive
+                ? "bg-dark-800/80 border-positive/30 shadow-lg shadow-positive/5"
+                : "bg-dark-800/40 border-dark-700/50 opacity-60"
+            }`}>
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                  traderAlive
+                    ? "bg-positive/15 border border-positive/20"
+                    : "bg-dark-700 border border-dark-600"
+                }`}>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={traderAlive ? "#22c55e" : "#525252"} strokeWidth="1.5">
+                    <rect x="3" y="8" width="18" height="13" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M9 12h6" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M9 16h6" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 2v3" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M8 5h8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold">Trader</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${traderAlive ? "bg-positive animate-pulse" : "bg-dark-500"}`} />
+                    <span className={`text-xs ${traderAlive ? "text-positive" : "text-gray-600"}`}>
+                      {traderAlive ? "Active" : "Offline"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2 text-[10px] text-gray-600">
+                <span className={`px-1.5 py-0.5 rounded ${traderAlive ? "bg-positive/10 text-positive" : "bg-dark-700 text-gray-600"}`}>MEXC</span>
+                <span>executing signals</span>
+              </div>
             </div>
           </div>
         </div>
