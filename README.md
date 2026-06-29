@@ -195,9 +195,7 @@ docker-compose up --build
 
 ## Demo
 
-[![Demo](https://img.shields.io/badge/watch-demo-red?style=flat-square)](docs/demo.mp4)
-
-Watch the paper trading demo: [`docs/demo.mp4`](docs/demo.mp4)
+<video src="docs/demo.mp4" controls width="100%"></video>
 
 ## Testing
 
