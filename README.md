@@ -193,6 +193,12 @@ docker-compose up --build
 # Terminal 4: cd frontend && npm run dev
 ```
 
+## Demo
+
+[![Demo](https://img.shields.io/badge/watch-demo-red?style=flat-square)](docs/demo.mp4)
+
+Watch the paper trading demo: [`docs/demo.mp4`](docs/demo.mp4)
+
 ## Testing
 
 ```bash
