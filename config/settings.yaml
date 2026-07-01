@@ -44,6 +44,29 @@ trader:
   min_volume_usdt: 10000
   stale_signal_timeout_seconds: 300
 
+guardian:
+  enabled: true
+  monitor_interval_seconds: 60
+  heartbeat_interval_seconds: 30
+  volatility_multiplier: 2.5
+  flash_dip_threshold_pct: 3.0
+  volume_anomaly_multiplier: 5.0
+  rsi_oversold: 30
+  rsi_overbought: 70
+  rsi_extreme_pct: 40.0
+  correlation_deviation: 2.0
+  tracked_pairs:
+    - BTC/USDT
+    - ETH/USDT
+    - SOL/USDT
+    - BNB/USDT
+    - XRP/USDT
+    - ADA/USDT
+    - DOGE/USDT
+    - AVAX/USDT
+    - DOT/USDT
+    - LINK/USDT
+
 exchange:
   name: mexc
   use_sandbox: false
@@ -55,6 +78,7 @@ redis:
   password: ""
   signal_channel: signals:market
   heartbeat_channel: heartbeat:analyst
+  status_channel: alerts:market:status
   db: 0
 
 logging:

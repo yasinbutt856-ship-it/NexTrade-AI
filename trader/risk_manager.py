@@ -4,6 +4,13 @@ from shared.logger import get_logger
 
 logger = get_logger(__name__)
 
+MARKET_LEVELS = {
+    "GREEN": {"size_multiplier": 1.0, "can_open": True, "description": "Normal"},
+    "YELLOW": {"size_multiplier": 0.5, "can_open": True, "description": "Caution — reducing position sizes"},
+    "ORANGE": {"size_multiplier": 0.0, "can_open": False, "description": "Warning — closing risky positions"},
+    "RED": {"size_multiplier": 0.0, "can_open": False, "description": "Danger — halting all trading"},
+}
+
 CORRELATION_GROUPS: dict[str, set[str]] = {
     "btc_eth": {"BTC/USDT", "ETH/USDT", "BTCUSDT", "ETHUSDT"},
     "major_l1": {"SOL/USDT", "BNB/USDT", "XRP/USDT", "ADA/USDT", "AVAX/USDT", "DOT/USDT",
@@ -45,6 +52,38 @@ class RiskManager:
         self._daily_peak: Optional[float] = None
         self._current_date: Optional[date] = None
         self._last_balance: Optional[float] = None
+        self._market_level: str = "GREEN"
+        self._market_recommendation: str = "normal"
+        self._crash_triggers: list[str] = []
+
+    def set_market_status(self, level: str, recommendation: str = "normal", triggers: Optional[list[str]] = None) -> None:
+        if level not in MARKET_LEVELS:
+            logger.warning("unknown_market_level", level=level)
+            return
+        self._market_level = level
+        self._market_recommendation = recommendation
+        self._crash_triggers = triggers or []
+        logger.info(
+            "market_status_updated",
+            level=level,
+            recommendation=recommendation,
+            triggers=self._crash_triggers,
+        )
+
+    def get_market_level(self) -> str:
+        return self._market_level
+
+    def get_size_multiplier(self) -> float:
+        return MARKET_LEVELS.get(self._market_level, MARKET_LEVELS["GREEN"])["size_multiplier"]
+
+    def can_open_new_positions(self) -> bool:
+        return MARKET_LEVELS.get(self._market_level, MARKET_LEVELS["GREEN"])["can_open"]
+
+    def get_market_recommendation(self) -> str:
+        return self._market_recommendation
+
+    def get_crash_triggers(self) -> list[str]:
+        return list(self._crash_triggers)
 
     def _check_date_reset(self) -> None:
         today = datetime.now(timezone.utc).date()
@@ -76,6 +115,9 @@ class RiskManager:
     def can_trade(self, symbol: str, open_symbols: Optional[set[str]] = None) -> tuple[bool, str]:
         now = datetime.now(timezone.utc)
 
+        if not self.can_open_new_positions():
+            return False, f"Market level {self._market_level} — {self._market_recommendation}"
+
         if self._circuit_breaker_active:
             return False, "Circuit breaker active — drawdown limit exceeded"
 
@@ -104,7 +146,8 @@ class RiskManager:
         return True, "ok"
 
     def calculate_position_size(self, balance: float, price: float) -> float:
-        size = min(self.max_position_size_usdt, balance * 0.1)
+        multiplier = self.get_size_multiplier()
+        size = min(self.max_position_size_usdt, balance * 0.1) * multiplier
         quantity = size / price
         logger.debug(
             "position_size_calculated",

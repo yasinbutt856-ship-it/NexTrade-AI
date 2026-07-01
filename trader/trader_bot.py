@@ -180,6 +180,7 @@ class TraderBot:
         self.signal_channel = redis_cfg.get("signal_channel", "signals:market")
         self.heartbeat_channel = redis_cfg.get("heartbeat_channel", "heartbeat:analyst")
         self.control_channel = "bot:control"
+        self.status_channel = redis_cfg.get("status_channel", "alerts:market:status")
         self.stale_signal_timeout = trader_cfg.get("stale_signal_timeout_seconds", 300)
         self.heartbeat_timeout = 60
 
@@ -274,6 +275,19 @@ class TraderBot:
         except Exception:
             pass
 
+    async def _handle_market_status(self, data: dict) -> None:
+        level = data.get("level", "GREEN")
+        recommendation = data.get("recommendation", "normal")
+        triggers = data.get("triggers", [])
+        for session in self.sessions.values():
+            session.risk_manager.set_market_status(level, recommendation, triggers)
+        logger.info(
+            "market_status_received",
+            level=level,
+            recommendation=recommendation,
+            triggers=triggers,
+        )
+
     async def _on_price_update(self, symbol: str, price: float) -> None:
         for session in self.sessions.values():
             session.position_tracker.update_price(symbol, price)
@@ -321,6 +335,7 @@ class TraderBot:
 
         monitor_task = asyncio.create_task(self._monitor_loop())
         asyncio.create_task(self.redis.subscribe(self.control_channel, self._handle_control))
+        asyncio.create_task(self.redis.subscribe(self.status_channel, self._handle_market_status))
         await self.redis.subscribe(self.signal_channel, self._handle_signal)
         await monitor_task
 
@@ -621,6 +636,26 @@ class TraderBot:
                 refresh_counter = 0
 
             for session in self.sessions.values():
+                market_level = session.risk_manager.get_market_level()
+                recommendation = session.risk_manager.get_market_recommendation()
+
+                if market_level in ("ORANGE", "RED") and session.position_tracker.position_count() > 0:
+                    for pos in list(session.position_tracker.get_all_open_positions()):
+                        should_close = False
+                        if market_level == "RED":
+                            should_close = True
+                        elif market_level == "ORANGE" and pos.realized_pnl < 0:
+                            should_close = True
+                        if should_close:
+                            reason = f"market_{recommendation}_{market_level}"
+                            await self._close_position(session, pos.symbol, pos.current_price or pos.entry_price, reason)
+                            logger.info(
+                                "position_closed_by_guardian",
+                                user=session.user_id,
+                                symbol=pos.symbol,
+                                level=market_level,
+                            )
+
                 if session.mode == BotMode.PAPER and session.paper_engine.positions:
                     market_prices: dict[str, float] = {}
                     for sym in session.paper_engine.positions:

@@ -44,7 +44,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["shared*", "analyst*", "trader*", "db*", "web*"]
+include = ["shared*", "analyst*", "trader*", "guardian*", "db*", "web*"]
 
 [tool.ruff]
 line-length = 100

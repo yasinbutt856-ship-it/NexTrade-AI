@@ -34,6 +34,8 @@ def _get_bot_mode() -> str:
 async def get_status():
     analyst_alive = False
     trader_alive = False
+    guardian_alive = False
+    guardian_status = {"level": "GREEN", "score": 0, "triggers": [], "recommendation": "normal"}
     now = datetime.now(timezone.utc)
     try:
         rc = await _get_redis()
@@ -57,6 +59,19 @@ async def get_status():
             if (now - ts.replace(tzinfo=timezone.utc)).total_seconds() < 120:
                 trader_alive = True
 
+        guardian_hb = await rc.lrange("heartbeat:guardian", 0, 0)
+        if guardian_hb:
+            ts = datetime.fromisoformat(json.loads(guardian_hb[0]).get("timestamp", ""))
+            if (now - ts.replace(tzinfo=timezone.utc)).total_seconds() < 120:
+                guardian_alive = True
+
+        raw_status = await rc.get("alerts:market:latest")
+        if raw_status:
+            try:
+                guardian_status = json.loads(raw_status)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
         await rc.disconnect()
     except Exception:
         pass
@@ -67,6 +82,8 @@ async def get_status():
         "mode": mode,
         "analyst_alive": analyst_alive,
         "trader_alive": trader_alive,
+        "guardian_alive": guardian_alive,
+        "guardian_status": guardian_status,
         "uptime_seconds": 0,
     }
 

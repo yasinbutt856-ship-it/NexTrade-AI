@@ -40,16 +40,24 @@ The frontend is a **dark-only** React 19 SPA with an amber/gold accent palette a
 │  JWT auth · Plan enforcement · Rate limiting              │
 │  Encrypted exchange key storage (Fernet AES-256)          │
 │  Stripe subscriptions · GDPR compliance                   │
-└──────┬──────────────────────────────┬───────────────────┘
-       │ Redis pub/sub                │ Redis pub/sub
-┌──────▼──────────┐          ┌───────▼───────────────────┐
-│  Analyst Bot    │ signals  │     Trader Bot (Railway)   │
-│  · 15 strategies│────────► │  · Multi-tenant sessions   │
-│  · Strategy     │          │  · Per-user exchange clients│
-│    scorer       │          │  · Paper + Live execution  │
-│  · Heartbeat    │          │  · Risk management         │
-└─────────────────┘          │  · Position tracking        │
-                             └────────────────────────────┘
+└──────┬──────────────────────────────────────────┬───────┘
+       │ Redis pub/sub              Redis pub/sub │
+┌──────▼──────────┐  ┌──────────────┐  ┌─────────▼──────────┐
+│  Analyst Bot    │  │ Guardian Bot │  │   Trader Bot       │
+│  · 15 strategies│  │ · Volatility │  │ · Multi-tenant     │
+│  · Strategy     │  │ · Flash dip  │  │ · Paper + Live     │
+│    scorer       │  │ · Volume     │  │ · Risk management  │
+│  · 3 timeframes │  │ · RSI market │  │ · Position tracking│
+└──────┬──────────┘  └──────┬───────┘  └──────────┬─────────┘
+       │ signals:market     │ alerts:market:status  │
+       └─────────┬──────────┴──────────┬────────────┘
+                 ▼                     ▼
+              ┌─────────────────────────────┐
+              │         Redis Pub/Sub        │
+              │  signals:market              │
+              │  alerts:market:status        │
+              │  heartbeat:* (3 channels)    │
+              └─────────────────────────────┘
 ```
 
 ### Services
@@ -59,6 +67,7 @@ The frontend is a **dark-only** React 19 SPA with an amber/gold accent palette a
 | **Frontend** | React 19, TypeScript, Tailwind v4, Recharts, Framer Motion | Vercel |
 | **Backend API** | FastAPI, SQLAlchemy (async), PostgreSQL, Redis | Railway |
 | **Analyst Bot** | Python, pandas_ta, ccxt, Redis pub/sub, strategy scorer | Railway |
+| **Guardian Bot** | Python, pandas_ta, ccxt, Redis pub/sub, crash detection | Railway |
 | **Trader Bot** | Python, ccxt, Redis pub/sub, multi-tenant sessions | Railway |
 | **Database** | PostgreSQL (prod) / SQLite (dev) | Railway |
 | **Cache** | Redis — signals, heartbeats, logs, rate limits | Railway |
@@ -76,6 +85,17 @@ Poor performers naturally lose weight over time — no manual tuning needed.
 ## Production Safety (Audited)
 
 All critical failure modes from independent code audits have been addressed:
+
+### Guardian Agent (Market Crash Detection)
+A third autonomous agent monitors global market conditions and proactively halts trading before a crash hits:
+- **Volatility Spike**: Detects ATR multiplier >2.5x across tracked pairs
+- **Flash Dip**: Identifies rapid 3%+ drops on 15%+ of tracked pairs
+- **Volume Anomaly**: Flags volume >5x 24h average (panic selling signal)
+- **RSI Extreme**: Alerts when >40% of pairs enter oversold/overbought territory
+- **Correlation Breakdown**: Monitors BTC/ETH correlation deviation >2 standard deviations
+- Publishes to Redis channel `alerts:market:status` every 60s
+- **Levels**: GREEN (normal) → YELLOW (reduce size) → ORANGE (close losing positions) → RED (close all)
+- **Fail-safe**: guardian crash → trade continues at GREEN (normal)
 
 | Category | Fix |
 |----------|-----|
@@ -212,11 +232,12 @@ pytest tests/ --cov=. --cov-report=term
 | Component | Platform | Method |
 |-----------|----------|--------|
 | Frontend | **Vercel** | `cd frontend && npm run build && vercel deploy dist --prod` |
-| Backend API | **Railway** | Auto-deploys from GitHub master via Dockerfile.web |
-| Analyst Bot | **Railway** | Auto-deploys from GitHub master via Dockerfile.analyst |
-| Trader Bot | **Railway** | Auto-deploys from GitHub master via Dockerfile.trader |
+| Backend API | **Railway** | Auto-deploys from GitHub main via Dockerfile.web |
+| Analyst Bot | **Railway** | Auto-deploys from GitHub main via Dockerfile.analyst |
+| Guardian Bot | **Railway** | Auto-deploys from GitHub main via Dockerfile.guardian |
+| Trader Bot | **Railway** | Auto-deploys from GitHub main via Dockerfile.trader |
 | PostgreSQL | **Railway** | Managed add-on, shared across all services via `DATABASE_URL` |
-| Redis | **Railway** | Managed add-on, must be attached to all 3 services |
+| Redis | **Railway** | Managed add-on, must be attached to all 4 services |
 
 ## License
 
