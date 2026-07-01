@@ -65,52 +65,36 @@ class UserResponse(BaseModel):
 
 @router.post("/register")
 async def register(data: RegisterRequest, session: AsyncSession = Depends(get_session)):
-    existing = await session.execute(select(UserRecord).where(UserRecord.email == data.email))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
-    plan = data.plan if data.plan in ("basic", "pro", "enterprise") else "basic"
-    limits = get_plan_limits(plan)
-    verification_token = generate_verification_token()
-    user = UserRecord(
-        email=data.email,
-        password_hash=hash_password(data.password),
-        plan=plan,
-        bot_active=True,
-        max_position_usdt=limits["max_position_usdt"],
-        verification_token=verification_token,
-        verification_token_expires=datetime.now(timezone.utc) + timedelta(hours=24),
-    )
-    session.add(user)
-    await session.commit()
-    await session.refresh(user)
-    notifier = _get_notifier()
-    verify_link = f"https://dist-rho-sandy-41.vercel.app/verify-email?token={verification_token}"
+    import traceback
     try:
-        await notifier.send_custom_email(
-            to=user.email,
-            subject="Verify your email - NexTrade AI",
-            body=f"Welcome to NexTrade AI!\n\nPlease verify your email by clicking this link:\n{verify_link}\n\nThis link expires in 24 hours.",
-            html_template="verify_email.html",
-            verify_link=verify_link,
+        existing = await session.execute(select(UserRecord).where(UserRecord.email == data.email))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Email already registered")
+        plan = data.plan if data.plan in ("basic", "pro", "enterprise") else "basic"
+        limits = get_plan_limits(plan)
+        user = UserRecord(
+            email=data.email,
+            password_hash=hash_password(data.password),
+            plan=plan,
+            bot_active=True,
+            max_position_usdt=limits["max_position_usdt"],
         )
-        await notifier.send_custom_email(
-            to=user.email,
-            subject="Welcome to NexTrade AI - Getting Started",
-            body=f"Hi {user.email},\n\nThanks for joining! Here's how to start:\n1. Get MEXC API keys\n2. Connect them in Settings\n3. Start Paper Trading\n\nThe dashboard link: https://dist-rho-sandy-41.vercel.app/dashboard",
-            html_template="welcome.html",
-            email=user.email,
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        exchange = user.exchange.value if hasattr(user.exchange, 'value') else (user.exchange or "mexc")
+        token = create_access_token(user.id, user.email, user.is_admin)
+        return AuthResponse(
+            token=token, email=user.email, is_admin=user.is_admin,
+            plan=user.plan.value, mode=user.mode.value, trade_type=user.trade_type.value,
+            exchange=exchange, bot_active=user.bot_active,
+            wallet_address=user.wallet_address or "",
+            wallet_type=user.wallet_type or "",
         )
+    except HTTPException:
+        raise
     except Exception as e:
-        pass
-    exchange = user.exchange.value if hasattr(user.exchange, 'value') else (user.exchange or "mexc")
-    token = create_access_token(user.id, user.email, user.is_admin)
-    return AuthResponse(
-        token=token, email=user.email, is_admin=user.is_admin,
-        plan=user.plan.value, mode=user.mode.value, trade_type=user.trade_type.value,
-        exchange=exchange, bot_active=user.bot_active,
-        wallet_address=user.wallet_address or "",
-        wallet_type=user.wallet_type or "",
-    )
+        raise HTTPException(status_code=500, detail=f"Registration error: {str(e)}")
 
 
 @router.post("/login")

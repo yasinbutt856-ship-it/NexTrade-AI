@@ -23,6 +23,36 @@ async_session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_o
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255)"))
+    except Exception:
+        pass
+    try:
+        async with engine.begin() as conn:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN stripe_subscription_id VARCHAR(255)"))
+    except Exception:
+        pass
+    try:
+        async with engine.begin() as conn:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN usage_api_calls INTEGER DEFAULT 0"))
+    except Exception:
+        pass
+    try:
+        async with engine.begin() as conn:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN usage_bot_hours FLOAT DEFAULT 0.0"))
+    except Exception:
+        pass
+    try:
+        async with engine.begin() as conn:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE users ADD COLUMN usage_trade_volume FLOAT DEFAULT 0.0"))
+    except Exception:
+        pass
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
