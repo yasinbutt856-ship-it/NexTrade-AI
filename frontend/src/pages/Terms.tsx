@@ -43,7 +43,7 @@ const sections = [
 
 export default function Terms() {
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-950">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-4xl mx-auto px-6 py-16">

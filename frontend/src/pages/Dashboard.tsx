@@ -85,18 +85,24 @@ export default function Dashboard() {
     <div className="min-h-screen bg-dark-950">
       <AppNavbar />
       <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+        {/* Floating gradient orbs */}
+        <div className="fixed top-1/3 -left-32 w-96 h-96 bg-accent/5 rounded-full blur-[128px] pointer-events-none" />
+        <div className="fixed bottom-1/3 -right-32 w-96 h-96 bg-accent-secondary/5 rounded-full blur-[128px] pointer-events-none" />
+
         {/* Header + Bot Communication */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative">
           <div>
-            <h1 className="text-lg font-semibold">Dashboard</h1>
+            <h1 className="text-lg font-semibold">
+              <span className="neon-text-cyan">Trading</span> <span className="text-gray-400">Dashboard</span>
+            </h1>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex bg-dark-800 rounded-lg p-0.5 border border-dark-700">
+            <div className="glass-card rounded-lg p-0.5">
               {(["spot", "futures"] as const).map((t) => (
                 <button key={t} onClick={() => switchTradeType.mutate(t)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     (user?.trade_type || "spot") === t
-                      ? "bg-accent text-dark-950"
+                      ? "bg-gradient-to-r from-accent to-accent-secondary text-white"
                       : "text-gray-500 hover:text-white"
                   }`}
                 >
@@ -104,12 +110,12 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-            <div className="flex bg-dark-800 rounded-lg p-0.5 border border-dark-700">
+            <div className="glass-card rounded-lg p-0.5">
               {(["paper", "live"] as const).map((m) => (
                 <button key={m} onClick={() => switchMode.mutate(m)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     (user?.mode || "paper") === m
-                      ? m === "live" ? "bg-positive text-dark-950" : "bg-accent text-dark-950"
+                      ? m === "live" ? "bg-positive text-dark-950" : "bg-gradient-to-r from-accent to-accent-secondary text-white"
                       : "text-gray-500 hover:text-white"
                   }`}
                 >
@@ -121,21 +127,21 @@ export default function Dashboard() {
         </div>
 
         {/* Bot Communication Visualization */}
-        <div className="grid grid-cols-12 gap-4 items-center">
+        <div className="grid grid-cols-12 gap-4 items-center relative">
           {/* Analyst */}
           <div className="col-span-5">
-            <div className={`relative rounded-2xl border p-5 transition-all ${
+            <div className={`glass-card rounded-2xl border p-5 transition-all ${
               analystAlive
-                ? "bg-dark-800/80 border-accent/30 shadow-lg shadow-accent/5"
-                : "bg-dark-800/40 border-dark-700/50 opacity-60"
+                ? "border-accent/30 shadow-lg shadow-accent/10"
+                : "opacity-60"
             }`}>
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
                   analystAlive
-                    ? "bg-accent/15 border border-accent/20"
+                    ? "bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20"
                     : "bg-dark-700 border border-dark-600"
                 }`}>
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={analystAlive ? "#f59e0b" : "#525252"} strokeWidth="1.5">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={analystAlive ? "#06b6d4" : "#525252"} strokeWidth="1.5">
                     <path d="M12 4a4 4 0 100 8 4 4 0 000-8z" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M17 9l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
@@ -144,7 +150,7 @@ export default function Dashboard() {
                 <div>
                   <div className="text-sm font-semibold">Analyst</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${analystAlive ? "bg-accent animate-pulse" : "bg-dark-500"}`} />
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${analystAlive ? "bg-accent animate-neon-pulse" : "bg-dark-500"}`} />
                     <span className={`text-xs ${analystAlive ? "text-accent" : "text-gray-600"}`}>
                       {analystAlive ? "Active" : "Offline"}
                     </span>
@@ -152,7 +158,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-2 text-[10px] text-gray-600">
-                <span className={`px-1.5 py-0.5 rounded ${analystAlive ? "bg-accent/10 text-accent" : "bg-dark-700 text-gray-600"}`}>15 strategies</span>
+                <span className={`px-1.5 py-0.5 rounded ${analystAlive ? "bg-accent/10 text-accent border border-accent/20" : "bg-dark-700 text-gray-600"}`}>15 strategies</span>
                 <span>scanning 4 timeframes</span>
               </div>
             </div>
@@ -161,16 +167,16 @@ export default function Dashboard() {
           {/* Middle: connection + trading status */}
           <div className="col-span-2 flex flex-col items-center gap-2">
             <div className="flex items-center gap-1">
-              <div className={`w-1 h-1 rounded-full ${analystAlive ? "bg-accent" : "bg-dark-600"} transition-all ${analystAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+              <div className={`w-1 h-1 rounded-full ${analystAlive ? "bg-accent animate-ping" : "bg-dark-600"}`} style={{ animationDuration: "2s" }} />
               <div className={`w-6 h-0.5 rounded-full ${analystAlive ? "bg-accent/60" : "bg-dark-600"}`} />
-              <div className={`w-1 h-1 rounded-full ${traderAlive ? "bg-positive" : "bg-dark-600"} transition-all ${traderAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+              <div className={`w-1 h-1 rounded-full ${traderAlive ? "bg-positive animate-ping" : "bg-dark-600"}`} style={{ animationDuration: "2s" }} />
             </div>
-            <div className={`rounded-xl px-4 py-2 text-center border transition-all ${
+            <div className={`glass-card rounded-xl px-4 py-2 text-center border transition-all ${
               botActive
-                ? "bg-accent/10 border-accent/25"
-                : "bg-dark-800/60 border-dark-700"
+                ? "border-accent/25 shadow-lg shadow-accent/10"
+                : ""
             }`}>
-              <div className={`text-xs font-semibold ${botActive ? "text-accent" : "text-gray-500"}`}>
+              <div className={`text-xs font-semibold ${botActive ? "neon-text-cyan" : "text-gray-500"}`}>
                 {botActive ? "Trading" : "Idle"}
               </div>
               <div className={`text-[10px] ${botActive ? "text-accent/70" : "text-gray-600"}`}>
@@ -178,26 +184,26 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <div className={`w-1 h-1 rounded-full ${traderAlive ? "bg-positive" : "bg-dark-600"} transition-all ${traderAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+              <div className={`w-1 h-1 rounded-full ${traderAlive ? "bg-positive animate-ping" : "bg-dark-600"}`} style={{ animationDuration: "2s" }} />
               <div className={`w-6 h-0.5 rounded-full ${traderAlive ? "bg-positive/60" : "bg-dark-600"}`} />
-              <div className={`w-1 h-1 rounded-full ${analystAlive ? "bg-accent" : "bg-dark-600"} transition-all ${analystAlive ? "animate-ping" : ""}`} style={{ animationDuration: "2s" }} />
+              <div className={`w-1 h-1 rounded-full ${analystAlive ? "bg-accent animate-ping" : "bg-dark-600"}`} style={{ animationDuration: "2s" }} />
             </div>
           </div>
 
           {/* Trader */}
           <div className="col-span-5">
-            <div className={`relative rounded-2xl border p-5 transition-all ${
+            <div className={`glass-card rounded-2xl border p-5 transition-all ${
               traderAlive
-                ? "bg-dark-800/80 border-positive/30 shadow-lg shadow-positive/5"
-                : "bg-dark-800/40 border-dark-700/50 opacity-60"
+                ? "border-positive/30 shadow-lg shadow-positive/10"
+                : "opacity-60"
             }`}>
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
                   traderAlive
-                    ? "bg-positive/15 border border-positive/20"
+                    ? "bg-gradient-to-br from-positive/20 to-positive/5 border border-positive/20"
                     : "bg-dark-700 border border-dark-600"
                 }`}>
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={traderAlive ? "#22c55e" : "#525252"} strokeWidth="1.5">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={traderAlive ? "#10b981" : "#525252"} strokeWidth="1.5">
                     <rect x="3" y="8" width="18" height="13" rx="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M9 12h6" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M9 16h6" strokeLinecap="round" strokeLinejoin="round" />
@@ -208,7 +214,7 @@ export default function Dashboard() {
                 <div>
                   <div className="text-sm font-semibold">Trader</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${traderAlive ? "bg-positive animate-pulse" : "bg-dark-500"}`} />
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full ${traderAlive ? "bg-positive animate-neon-pulse" : "bg-dark-500"}`} />
                     <span className={`text-xs ${traderAlive ? "text-positive" : "text-gray-600"}`}>
                       {traderAlive ? "Active" : "Offline"}
                     </span>
@@ -216,7 +222,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-2 text-[10px] text-gray-600">
-                <span className={`px-1.5 py-0.5 rounded ${traderAlive ? "bg-positive/10 text-positive" : "bg-dark-700 text-gray-600"}`}>MEXC</span>
+                <span className={`px-1.5 py-0.5 rounded ${traderAlive ? "bg-positive/10 text-positive border border-positive/20" : "bg-dark-700 text-gray-600"}`}>MEXC</span>
                 <span>executing signals</span>
               </div>
             </div>
@@ -227,7 +233,7 @@ export default function Dashboard() {
         <Card>
           <CardContent className="flex items-center justify-between py-4">
             <div className="flex items-center gap-3">
-              <div className={`w-2 h-2 rounded-full ${botActive ? "bg-positive animate-pulse" : "bg-dark-500"}`} />
+              <div className={`w-2 h-2 rounded-full ${botActive ? "bg-positive animate-neon-pulse" : "bg-dark-500"}`} />
               <div>
                 <span className="text-sm font-medium">{botActive ? "Bot Active" : "Bot Idle"}</span>
                 <span className="text-xs text-gray-600 ml-2">
@@ -242,8 +248,8 @@ export default function Dashboard() {
                 disabled={keysRequired || startBot.isPending || stopBot.isPending}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
                   botActive
-                    ? "bg-negative/15 text-negative hover:bg-negative/25"
-                    : "bg-accent text-dark-950 hover:bg-accent-dark"
+                    ? "bg-negative/15 text-negative hover:bg-negative/25 border border-negative/20"
+                    : "bg-gradient-to-r from-accent to-accent-secondary text-white hover:shadow-lg hover:shadow-accent/20"
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {startBot.isPending || stopBot.isPending ? (
@@ -291,7 +297,9 @@ export default function Dashboard() {
         {/* Strategy Intelligence */}
         {strategyScores && strategyWeightData.length > 0 && (
           <div>
-            <h2 className="text-sm font-semibold mb-3">Strategy Intelligence</h2>
+            <h2 className="text-sm font-semibold mb-3">
+              <span className="neon-text-cyan">Strategy</span> <span className="text-gray-400">Intelligence</span>
+            </h2>
             <div className="grid md:grid-cols-2 gap-4">
               <Card>
                 <CardContent className="py-4">
@@ -301,7 +309,7 @@ export default function Dashboard() {
                       <div key={s.name} className="flex items-center gap-2">
                         <span className="text-xs text-gray-400 w-24 truncate">{s.name}</span>
                         <div className="flex-1 h-2 bg-dark-700 rounded-full overflow-hidden">
-                          <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${s.weight * 5}%` }} />
+                          <div className="h-full bg-gradient-to-r from-accent to-accent-secondary rounded-full transition-all" style={{ width: `${s.weight * 5}%` }} />
                         </div>
                         <span className="text-xs tabular-nums text-gray-500 w-8 text-right">{s.weight}%</span>
                       </div>
@@ -335,20 +343,22 @@ export default function Dashboard() {
         {/* Equity Curve */}
         <Card>
           <CardContent className="py-4">
-            <h2 className="text-sm font-semibold mb-3">Equity Curve</h2>
+            <h2 className="text-sm font-semibold mb-3">
+              <span className="neon-text-cyan">Equity</span> <span className="text-gray-400">Curve</span>
+            </h2>
             {performance?.equity_curve && performance.equity_curve.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={performance.equity_curve}>
                   <defs>
                     <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="date" tick={{ fill: "#525252", fontSize: 10 }} tickFormatter={(v) => new Date(v).toLocaleDateString()} axisLine={false} tickLine={false} />
                   <YAxis domain={["dataMin - 100", "dataMax + 100"]} tick={{ fill: "#525252", fontSize: 10 }} tickFormatter={(v) => `$${v.toLocaleString()}`} axisLine={false} tickLine={false} width={60} />
-                  <Tooltip contentStyle={{ background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e5e5e5", fontSize: 12 }} labelFormatter={(v) => new Date(v).toLocaleString()} />
-                  <Area type="monotone" dataKey="value" stroke="#f59e0b" strokeWidth={1.5} fill="url(#eqGrad)" />
+                  <Tooltip contentStyle={{ background: "#1a1a1a", border: "1px solid rgba(6, 182, 212, 0.2)", borderRadius: 8, color: "#e5e5e5", fontSize: 12 }} labelFormatter={(v) => new Date(v).toLocaleString()} />
+                  <Area type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={1.5} fill="url(#eqGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -362,15 +372,17 @@ export default function Dashboard() {
           <Card>
             <CardContent className="py-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold">Portfolio</h2>
+                <h2 className="text-sm font-semibold">
+                  <span className="neon-text-cyan">Portfolio</span> <span className="text-gray-400">Overview</span>
+                </h2>
                 <div className="flex gap-2">
                   <button onClick={() => { api.exportTradesCsv().then(b => { const url = URL.createObjectURL(b); const a = document.createElement("a"); a.href = url; a.download = "trades.csv"; a.click(); URL.revokeObjectURL(url); addToast("Trades exported", "success"); }).catch(() => addToast("Export failed", "error")); }}
-                    className="text-xs text-gray-500 hover:text-white border border-dark-600 px-2.5 py-1 rounded-md transition-colors"
+                    className="text-xs text-gray-500 hover:text-white glass-card px-2.5 py-1 rounded-md transition-colors"
                   >
                     Export
                   </button>
                   <button onClick={() => navigate("/strategy-performance")}
-                    className="text-xs text-accent hover:text-accent-dark border border-accent/20 px-2.5 py-1 rounded-md transition-colors"
+                    className="text-xs text-accent hover:text-accent-dark border border-accent/20 bg-accent/5 px-2.5 py-1 rounded-md transition-colors"
                   >
                     Strategies
                   </button>
@@ -424,7 +436,9 @@ export default function Dashboard() {
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold">Latest Signals</h2>
+              <h2 className="text-sm font-semibold">
+                <span className="neon-text-cyan">Latest</span> <span className="text-gray-400">Signals</span>
+              </h2>
               <button onClick={() => navigate("/signals")} className="text-xs text-accent hover:underline">View All</button>
             </div>
             <Card>
@@ -432,7 +446,9 @@ export default function Dashboard() {
             </Card>
           </div>
           <div>
-            <h2 className="text-sm font-semibold mb-3">Bot Logs</h2>
+            <h2 className="text-sm font-semibold mb-3">
+              <span className="neon-text-cyan">Bot</span> <span className="text-gray-400">Logs</span>
+            </h2>
             <Card className="max-h-56 overflow-y-auto">
               {botLogs && botLogs.length > 0 ? (
                 <div className="p-4 space-y-1 font-mono text-xs">

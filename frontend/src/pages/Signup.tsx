@@ -8,7 +8,6 @@ export default function Signup() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [plan, setPlan] = useState("basic");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +16,7 @@ export default function Signup() {
     setError("");
     setLoading(true);
     try {
-      await register(email, password, plan);
+      await register(email, password, "pro");
       navigate("/dashboard");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -27,21 +26,22 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center px-6">
-      <div className="absolute inset-0 bg-gradient-to-b from-accent-glow via-transparent to-transparent opacity-20" />
+    <div className="min-h-screen bg-dark-950 flex items-center justify-center px-6">
+      <div className="fixed top-1/3 -left-32 w-96 h-96 bg-accent/8 rounded-full blur-[128px] pointer-events-none" />
+      <div className="fixed bottom-1/3 -right-32 w-96 h-96 bg-accent-secondary/8 rounded-full blur-[128px] pointer-events-none" />
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-              <span className="text-dark-900 font-heading font-bold text-sm">N</span>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-secondary flex items-center justify-center shadow-lg shadow-accent/20">
+              <span className="text-white font-bold text-sm">N</span>
             </div>
-            <span className="font-heading font-bold text-lg tracking-wider">NexTrade AI</span>
+            <span className="font-bold text-lg tracking-wider"><span className="neon-text-cyan">Nex</span><span className="neon-text-magenta">Trade</span></span>
           </Link>
-          <h1 className="font-heading text-2xl font-bold">Create Account</h1>
+          <h1 className="text-2xl font-bold">Create Account</h1>
           <p className="text-gray-400 text-sm mt-1">Start your automated trading journey</p>
         </div>
 
-        <motion.form initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="bg-dark-700/50 border border-white/5 rounded-2xl p-8 space-y-5">
+        <motion.form initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 space-y-5">
           {error && (
             <div className="bg-negative/15 border border-negative/20 text-negative text-sm px-4 py-3 rounded-lg">
               {error}
@@ -66,25 +66,8 @@ export default function Signup() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1.5">Plan</label>
-            <div className="grid grid-cols-3 gap-2">
-              {["basic", "pro", "enterprise"].map((p) => (
-                <button key={p} type="button" onClick={() => setPlan(p)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold capitalize transition-all border ${
-                    plan === p
-                      ? "bg-accent text-dark-900 border-accent"
-                      : "bg-dark-800 text-gray-400 border-white/10 hover:border-white/20"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <button type="submit" disabled={loading}
-            className="w-full bg-accent hover:bg-accent-dark text-dark-900 font-bold py-3 rounded-xl transition-all disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-accent to-accent-secondary hover:from-accent-dark hover:to-accent-secondary text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-accent/20"
           >
             {loading ? "Creating account..." : "Create Account"}
           </button>

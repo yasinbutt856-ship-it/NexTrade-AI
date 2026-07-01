@@ -6,7 +6,7 @@ export function HeroIllustration() {
 
   return (
     <div className="relative w-full max-w-[420px] mx-auto">
-      <div className="rounded-3xl bg-gradient-to-br from-accent/[0.04] via-blue-accent/[0.02] to-transparent border border-white/[0.06] p-6 backdrop-blur-sm">
+      <div className="rounded-3xl bg-gradient-to-br from-accent/[0.04] via-accent-secondary/[0.02] to-transparent border border-white/[0.06] p-6 backdrop-blur-sm">
         {/* Terminal header */}
         <div className="flex items-center gap-1.5 mb-5">
           <div className="w-2.5 h-2.5 rounded-full bg-red-400/80" />

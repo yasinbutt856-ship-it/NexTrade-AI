@@ -60,7 +60,7 @@ export default function StatusPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-950">
       <div className="max-w-2xl mx-auto px-6 py-12">
         <PageTransition>
           <div className="text-center mb-10">
@@ -76,7 +76,7 @@ export default function StatusPage() {
             <div className="space-y-4">
               {services.map((svc, i) => (
                 <motion.div key={svc.name} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                  className="flex items-center justify-between bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3"
+                  className="flex items-center justify-between bg-dark-950/50 border border-white/[0.04] rounded-xl px-4 py-3"
                 >
                   <div className="flex items-center gap-3">
                     <StatusDot status={svc.status} />
@@ -102,7 +102,7 @@ export default function StatusPage() {
                 { plan: "Pro", sla: "Best-effort", response: "24h" },
                 { plan: "Enterprise", sla: "Best-effort", response: "4h" },
               ].map((tier) => (
-                <div key={tier.plan} className="bg-dark-900/50 border border-white/[0.04] rounded-xl p-4 text-center">
+                <div key={tier.plan} className="bg-dark-950/50 border border-white/[0.04] rounded-xl p-4 text-center">
                   <div className="text-accent font-heading font-bold text-lg">{tier.sla}</div>
                   <div className="text-sm text-gray-400">uptime commitment</div>
                   <div className="text-xs text-gray-500 mt-1">{tier.plan} — {tier.response} response</div>

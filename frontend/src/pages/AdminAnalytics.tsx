@@ -20,7 +20,7 @@ export default function AdminAnalytics() {
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen bg-dark-950 text-white">
       <AppNavbar />
       <div className="max-w-6xl mx-auto px-6 py-16">
         <div className="h-10 w-60 bg-dark-800/40 rounded-xl animate-pulse mb-8" />
@@ -32,7 +32,7 @@ export default function AdminAnalytics() {
   );
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen bg-dark-950 text-white">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-6xl mx-auto px-6 py-16">
@@ -68,7 +68,7 @@ export default function AdminAnalytics() {
                     <span className="text-sm capitalize text-gray-400">{plan}</span>
                     <div className="flex items-center gap-3">
                       <div className="text-sm font-semibold">{count}</div>
-                      <div className="w-24 h-2 bg-dark-900 rounded-full overflow-hidden">
+                      <div className="w-24 h-2 bg-dark-950 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full ${
                           plan === "basic" ? "bg-dark-600" : plan === "pro" ? "bg-accent" : "bg-accent/60"
                         }`} style={{ width: `${data ? (count / Math.max(data.total_users, 1)) * 100 : 0}%` }} />
@@ -98,8 +98,8 @@ export default function AdminAnalytics() {
               {data?.user_growth.map((g, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <span className="text-xs text-gray-500 w-20 shrink-0">{g.month}</span>
-                  <div className="flex-1 h-5 bg-dark-900 rounded overflow-hidden relative">
-                    <div className="h-full bg-gradient-to-r from-accent to-blue-accent rounded transition-all duration-500"
+                  <div className="flex-1 h-5 bg-dark-950 rounded overflow-hidden relative">
+                    <div className="h-full bg-gradient-to-r from-accent to-accent-secondary rounded transition-all duration-500"
                       style={{ width: `${Math.min((g.new_users / Math.max(...(data?.user_growth.map(x => x.new_users) || [1]), 1)) * 100, 100)}%` }}
                     />
                   </div>

@@ -40,10 +40,10 @@ const queryClient = new QueryClient({
 
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+    <div className="min-h-screen bg-dark-950 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-blue-accent animate-pulse" />
-        <div className="text-gray-500 text-sm">Loading...</div>
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-secondary animate-pulse shadow-lg shadow-accent/20" />
+        <div className="text-gray-500 text-sm font-mono">Loading...</div>
       </div>
     </div>
   );

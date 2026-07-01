@@ -25,11 +25,11 @@ export default function Positions() {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-950">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <h1 className="font-heading text-2xl font-bold mb-6">Open Positions</h1>
+          <h1 className="text-2xl font-bold mb-6"><span className="neon-text-cyan">Open</span> <span className="text-gray-400">Positions</span></h1>
           <Card>
             <Table columns={columns} data={positions || []} emptyMessage="No open positions" />
           </Card>

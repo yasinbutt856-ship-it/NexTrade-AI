@@ -305,6 +305,35 @@ async def debug_admin(session: AsyncSession = Depends(get_session)):
     }
 
 
+@router.post("/debug/create-user")
+async def debug_create_user(data: dict, session: AsyncSession = Depends(get_session)):
+    from web.auth import hash_password, create_access_token
+    from db.models import UserRecord
+    email = data.get("email", "")
+    password = data.get("password", "")
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="email and password required")
+    result = await session.execute(select(UserRecord).where(UserRecord.email == email))
+    existing = result.scalar_one_or_none()
+    if existing:
+        existing.password_hash = hash_password(password)
+        existing.is_admin = True
+        existing.bot_active = True
+        await session.commit()
+        return {"created": False, "updated": True, "email": email}
+    user = UserRecord(
+        email=email,
+        password_hash=hash_password(password),
+        plan="pro",
+        bot_active=True,
+        is_admin=True,
+        max_position_usdt=999999.0,
+    )
+    session.add(user)
+    await session.commit()
+    return {"created": True, "updated": False, "email": email}
+
+
 @router.get("/debug/trader-simulate")
 async def debug_trader_simulate(session: AsyncSession = Depends(get_session)):
     from db.models import UserRecord

@@ -2,6 +2,10 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`bg-dark-700 rounded-lg animate-pulse ${className}`} />;
 }
 
+export function NeonSkeleton({ className = "" }: { className?: string }) {
+  return <div className={`bg-gradient-to-r from-accent/10 via-accent-secondary/10 to-accent/10 rounded-lg animate-pulse ${className}`} />;
+}
+
 export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
     <div className="space-y-2">
@@ -20,8 +24,8 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="grid md:grid-cols-3 gap-4">
       {[...Array(count)].map((_, i) => (
-        <div key={i} className="bg-dark-800 border border-dark-700 rounded-xl p-5">
-          <Skeleton className="w-8 h-8 mb-3" />
+        <div key={i} className="glass-card rounded-xl p-5">
+          <NeonSkeleton className="w-8 h-8 mb-3" />
           <Skeleton className="h-4 w-3/4 mb-2" />
           <Skeleton className="h-3 w-full mb-1" />
           <Skeleton className="h-3 w-2/3" />

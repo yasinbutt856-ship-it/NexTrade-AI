@@ -143,12 +143,12 @@ export default function Settings() {
   });
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-950">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-3xl mx-auto px-6 py-8 space-y-8">
           <div>
-            <h1 className="font-heading text-2xl font-bold">Settings</h1>
+            <h1 className="text-2xl font-bold"><span className="neon-text-cyan">Bot</span> <span className="text-gray-400">Settings</span></h1>
             <p className="text-gray-400 text-sm">Configure your bot and exchange connection</p>
           </div>
 
@@ -270,11 +270,11 @@ export default function Settings() {
                 {showAddAddress && (
                   <div className="bg-dark-800 border border-white/10 rounded-xl p-4 space-y-3 mb-3">
                     <input type="text" value={newAddress} onChange={(e) => setNewAddress(e.target.value)}
-                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
+                      className="w-full bg-dark-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
                       placeholder="Wallet address" />
                     <div className="flex gap-2">
                       <select value={newNetwork} onChange={(e) => setNewNetwork(e.target.value)}
-                        className="bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
+                        className="bg-dark-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
                       >
                         <option value="ERC20">ERC20</option>
                         <option value="BEP20">BEP20</option>
@@ -283,7 +283,7 @@ export default function Settings() {
                         <option value="ARBITRUM">ARBITRUM</option>
                       </select>
                       <input type="text" value={newLabel} onChange={(e) => setNewLabel(e.target.value)}
-                        className="flex-1 bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
+                        className="flex-1 bg-dark-950 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent/50"
                         placeholder="Label (e.g. My Wallet)" />
                     </div>
                     <button onClick={() => addWhitelistMutation.mutate()} disabled={!newAddress || addWhitelistMutation.isPending}
@@ -424,7 +424,7 @@ export default function Settings() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {["rsi", "macd_cross", "ema_trend", "volume_breakout", "bollinger_squeeze", "supertrend", "adx", "ichimoku", "pullback", "range", "counter_trend", "stoch_rsi", "psar", "mfi", "vwap"].map((s) => (
-                  <div key={s} className="bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3 text-sm capitalize text-gray-400">
+                  <div key={s} className="bg-dark-950/50 border border-white/[0.04] rounded-xl px-4 py-3 text-sm capitalize text-gray-400">
                     {s}
                   </div>
                 ))}
@@ -483,7 +483,7 @@ export default function Settings() {
                   { key: "telegram", label: "Telegram", val: notifTelegram, set: setNotifTelegram, desc: "Real-time trade execution alerts" },
                   { key: "push", label: "Push", val: notifPush, set: setNotifPush, desc: "Browser push notifications" },
                 ].map((n) => (
-                  <div key={n.key} className="flex items-center justify-between bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3">
+                  <div key={n.key} className="flex items-center justify-between bg-dark-950/50 border border-white/[0.04] rounded-xl px-4 py-3">
                     <div>
                       <div className="text-sm font-medium">{n.label}</div>
                       <div className="text-xs text-gray-500">{n.desc}</div>
@@ -523,7 +523,7 @@ export default function Settings() {
                 <div className="bg-accent/10 border border-accent/20 rounded-xl p-4">
                   <p className="text-accent text-sm font-semibold mb-2">Key generated — copy it now!</p>
                   <div className="flex gap-2">
-                    <code className="flex-1 bg-dark-900 px-3 py-2 rounded-lg text-xs font-mono text-accent break-all">{generatedKey}</code>
+                    <code className="flex-1 bg-dark-950 px-3 py-2 rounded-lg text-xs font-mono text-accent break-all">{generatedKey}</code>
                     <button onClick={() => { navigator.clipboard.writeText(generatedKey); addToast("Copied!", "success"); }}
                       className="text-accent hover:text-accent-dark p-2"
                     >
@@ -548,7 +548,7 @@ export default function Settings() {
               {apiKeysData?.api_keys && apiKeysData.api_keys.length > 0 && (
                 <div className="space-y-2">
                   {apiKeysData.api_keys.map((k) => (
-                    <div key={k.id} className="flex items-center justify-between bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3">
+                    <div key={k.id} className="flex items-center justify-between bg-dark-950/50 border border-white/[0.04] rounded-xl px-4 py-3">
                       <div>
                         <span className="text-sm font-mono text-gray-400">{k.key_prefix}...</span>
                         <span className="text-xs text-gray-500 ml-2">{k.name}</span>

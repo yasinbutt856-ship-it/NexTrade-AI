@@ -21,7 +21,7 @@ export default function Signals() {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-950">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-7xl mx-auto px-6 py-8">

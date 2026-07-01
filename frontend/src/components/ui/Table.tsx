@@ -21,7 +21,7 @@ export function Table<T>({ columns, data, emptyMessage = "No data" }: TableProps
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-dark-700 text-gray-500 text-xs uppercase tracking-wider">
+          <tr className="border-b border-white/5 text-gray-500 text-xs uppercase tracking-wider">
             {columns.map((col) => (
               <th key={col.key} className={`text-left px-4 py-3 font-medium ${col.className || ""}`}>
                 {col.label}
@@ -31,7 +31,7 @@ export function Table<T>({ columns, data, emptyMessage = "No data" }: TableProps
         </thead>
         <tbody>
           {data.map((item, i) => (
-            <tr key={i} className="border-b border-dark-700/50 last:border-0 hover:bg-white/[0.02] transition-colors">
+            <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-accent/[0.02] transition-colors">
               {columns.map((col) => (
                 <td key={col.key} className={`px-4 py-3 ${col.className || ""}`}>
                   {col.render(item)}
@@ -84,7 +84,7 @@ export function SortableTable<T>({ columns, data, emptyMessage = "No data" }: Ta
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-dark-700 text-gray-500 text-xs uppercase tracking-wider">
+          <tr className="border-b border-white/5 text-gray-500 text-xs uppercase tracking-wider">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -109,7 +109,7 @@ export function SortableTable<T>({ columns, data, emptyMessage = "No data" }: Ta
         </thead>
         <tbody>
           {sorted.map((item, i) => (
-            <tr key={i} className="border-b border-dark-700/50 last:border-0 hover:bg-white/[0.02] transition-colors">
+            <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-accent/[0.02] transition-colors">
               {columns.map((col) => (
                 <td key={col.key} className={`px-4 py-3 ${col.className || ""}`}>
                   {col.render(item)}

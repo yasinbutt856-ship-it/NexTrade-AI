@@ -56,7 +56,7 @@ const typeStyles: Record<string, string> = {
 
 export default function Changelog() {
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen bg-dark-950 text-white">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-4xl mx-auto px-6 py-16">

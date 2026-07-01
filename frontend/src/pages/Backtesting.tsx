@@ -12,7 +12,7 @@ const STRATEGIES = ["rsi", "macd_cross", "ema_trend", "volume_breakout", "bollin
 
 function MetricCard({ label, value, color = "text-white" }: { label: string; value: string; color?: string }) {
   return (
-    <div className="bg-dark-900/50 border border-white/[0.04] rounded-xl px-4 py-3">
+    <div className="bg-dark-950/50 border border-white/[0.04] rounded-xl px-4 py-3">
       <div className="text-xs text-gray-500 mb-1">{label}</div>
       <div className={`text-lg font-bold ${color}`}>{value}</div>
     </div>
@@ -43,7 +43,7 @@ export default function Backtesting() {
   const isResult = (r: any): r is BacktestResult => r && "total_pnl" in r;
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen bg-dark-950 text-white">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-5xl mx-auto px-6 py-16">
@@ -59,7 +59,7 @@ export default function Backtesting() {
               <div>
                 <label className="block text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Trading Pair</label>
                 <select value={pair} onChange={e => setPair(e.target.value)}
-                  className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-accent/50 focus:outline-none"
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-accent/50 focus:outline-none"
                 >
                   {PAIRS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
@@ -67,7 +67,7 @@ export default function Backtesting() {
               <div>
                 <label className="block text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Strategy</label>
                 <select value={strategy} onChange={e => setStrategy(e.target.value)}
-                  className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-accent/50 focus:outline-none"
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-accent/50 focus:outline-none"
                 >
                   {STRATEGIES.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
                 </select>
@@ -75,7 +75,7 @@ export default function Backtesting() {
               <div>
                 <label className="block text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Period (days)</label>
                 <input type="number" value={days} onChange={e => setDays(Number(e.target.value))} min={7} max={365}
-                  className="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-accent/50 focus:outline-none"
+                  className="w-full bg-dark-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-accent/50 focus:outline-none"
                 />
               </div>
               <div className="flex items-end">
@@ -107,7 +107,7 @@ export default function Backtesting() {
                 </div>
 
                 {result.equity_curve && result.equity_curve.length > 0 && (
-                  <div className="bg-dark-900/50 border border-white/[0.04] rounded-xl p-4">
+                  <div className="bg-dark-950/50 border border-white/[0.04] rounded-xl p-4">
                     <h3 className="text-sm font-semibold text-gray-400 mb-3">Equity Curve</h3>
                     <div className="h-48">
                       <ResponsiveContainer width="100%" height="100%">
@@ -124,7 +124,7 @@ export default function Backtesting() {
                 )}
 
                 {result.trades && result.trades.length > 0 && (
-                  <div className="bg-dark-900/50 border border-white/[0.04] rounded-xl overflow-hidden">
+                  <div className="bg-dark-950/50 border border-white/[0.04] rounded-xl overflow-hidden">
                     <h3 className="text-sm font-semibold text-gray-400 px-4 py-3 border-b border-white/[0.04]">Recent Trades</h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">

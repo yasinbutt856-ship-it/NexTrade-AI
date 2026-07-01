@@ -24,7 +24,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-dark-950 flex items-center justify-center px-6">
       <div className="absolute inset-0 bg-gradient-to-b from-accent-glow via-transparent to-transparent opacity-20" />
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">

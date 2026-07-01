@@ -16,16 +16,16 @@ const milestones = [
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen bg-dark-950 text-white">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-4xl mx-auto px-6 py-16">
           {/* Hero */}
           <div className="text-center mb-16">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent/40 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-accent/20">
-              <span className="text-dark-900 font-heading font-bold text-2xl">N</span>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent-secondary flex items-center justify-center mx-auto mb-6 shadow-xl shadow-accent/20">
+              <span className="text-white font-bold text-2xl">N</span>
             </div>
-            <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">About <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-accent/40">NexTrade AI</span></h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">About <span className="text-gradient-cyan-magenta">NexTrade AI</span></h1>
             <p className="text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed">
               We build institutional-grade algorithmic trading tools for retail traders. No VCs. No gimmicks. Just working software.
             </p>
@@ -33,9 +33,9 @@ export default function About() {
 
           {/* Mission */}
           <motion.section initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="bg-dark-800/40 border border-white/[0.06] rounded-2xl p-8 mb-8"
+            className="glass-card rounded-2xl p-8 mb-8"
           >
-            <h2 className="font-heading text-2xl font-bold mb-4">Our Mission</h2>
+            <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
             <p className="text-gray-400 leading-relaxed">
               Crypto trading should not require a computer science degree or a hedge fund budget. We built NexTrade AI to give retail traders access to the same kind of automated trading infrastructure that institutions use — without the six-figure licensing fees or requiring you to trust us with your funds.
             </p>
@@ -46,9 +46,9 @@ export default function About() {
 
           {/* Timeline */}
           <motion.section initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="bg-dark-800/40 border border-white/[0.06] rounded-2xl p-8 mb-8"
+            className="glass-card rounded-2xl p-8 mb-8"
           >
-            <h2 className="font-heading text-2xl font-bold mb-6">Development Timeline</h2>
+            <h2 className="text-2xl font-bold mb-6">Development Timeline</h2>
             <div className="space-y-0">
               {milestones.map((m, i) => (
                 <div key={i} className="flex gap-4 pb-6 last:pb-0 relative">
@@ -67,20 +67,20 @@ export default function About() {
 
           {/* Architecture */}
           <motion.section initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="bg-dark-800/40 border border-white/[0.06] rounded-2xl p-8 mb-8"
+            className="glass-card rounded-2xl p-8 mb-8"
           >
-            <h2 className="font-heading text-2xl font-bold mb-4">How It Works</h2>
+            <h2 className="text-2xl font-bold mb-4">How It Works</h2>
             <p className="text-gray-400 leading-relaxed mb-4">
               NexTrade AI operates as two independent services that communicate through Redis:
             </p>
             <div className="grid md:grid-cols-2 gap-6 mb-4">
-              <div className="bg-dark-900/50 rounded-xl p-5 border border-white/[0.04]">
+              <div className="bg-dark-950/50 rounded-xl p-5 border border-white/[0.04]">
                 <h3 className="font-heading text-sm font-bold text-accent mb-2">Analyst Bot</h3>
                 <p className="text-gray-400 text-xs leading-relaxed">
                   Scans markets every 15 minutes across 4 timeframes using 15 strategies. Generates signals with confidence scores and publishes them to Redis.
                 </p>
               </div>
-              <div className="bg-dark-900/50 rounded-xl p-5 border border-white/[0.04]">
+              <div className="bg-dark-950/50 rounded-xl p-5 border border-white/[0.04]">
                 <h3 className="font-heading text-sm font-bold text-accent mb-2">Trader Bot</h3>
                 <p className="text-gray-400 text-xs leading-relaxed">
                   Listens for signals via Redis pub/sub. Creates per-user sessions, executes trades on MEXC, manages risk, and tracks positions.
@@ -91,13 +91,13 @@ export default function About() {
 
           {/* Team */}
           <motion.section initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="bg-dark-800/40 border border-white/[0.06] rounded-2xl p-8 mb-8"
+            className="glass-card rounded-2xl p-8 mb-8"
           >
-            <h2 className="font-heading text-2xl font-bold mb-6">Team</h2>
+            <h2 className="text-2xl font-bold mb-6">Team</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {team.map((t, i) => (
-                <div key={i} className="bg-dark-900/50 rounded-xl p-5 border border-white/[0.04]">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent/30 to-blue-accent/30 flex items-center justify-center mb-3">
+                <div key={i} className="bg-dark-950/50 rounded-xl p-5 border border-white/[0.04]">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent/30 to-accent-secondary/30 flex items-center justify-center mb-3">
                     <span className="font-heading font-bold text-lg text-accent">{t.name.split(" ").map(n => n[0]).join("")}</span>
                   </div>
                   <h3 className="font-heading font-bold text-sm">{t.name}</h3>
@@ -110,7 +110,7 @@ export default function About() {
 
           {/* Company info */}
           <motion.section initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="bg-dark-800/40 border border-white/[0.06] rounded-2xl p-8"
+            className="glass-card rounded-2xl p-8"
           >
             <h2 className="font-heading text-2xl font-bold mb-4">Company</h2>
             <div className="space-y-2 text-sm text-gray-400">

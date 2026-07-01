@@ -16,12 +16,12 @@ const sections = [
 
 export default function Security() {
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen bg-dark-950 text-white">
       <AppNavbar />
       <PageTransition>
         <div className="max-w-4xl mx-auto px-6 py-16">
           <div className="text-center mb-16">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-blue-accent/20 flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent-secondary/20 flex items-center justify-center mx-auto mb-6">
               <ShieldIcon className="w-8 h-8 text-accent" />
             </div>
             <h1 className="font-heading text-4xl md:text-5xl font-bold mb-4">Security & Trust</h1>

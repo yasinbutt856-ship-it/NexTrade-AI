@@ -56,27 +56,35 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-dark-950 text-white selection:bg-accent/30 selection:text-white">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-dark-950/90 backdrop-blur-md border-b border-dark-800">
+      {/* Animated grid background */}
+      <div className="fixed inset-0 bg-grid pointer-events-none opacity-50" />
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-dark-950/80 to-dark-950 pointer-events-none" />
+
+      {/* Floating gradient orbs */}
+      <div className="fixed top-1/4 -left-32 w-96 h-96 bg-accent/10 rounded-full blur-[128px] pointer-events-none animate-neon-pulse" />
+      <div className="fixed bottom-1/4 -right-32 w-96 h-96 bg-accent-secondary/10 rounded-full blur-[128px] pointer-events-none animate-neon-pulse" style={{ animationDelay: "1s" }} />
+
+      <nav className="fixed top-0 left-0 right-0 z-50 glass-card-strong border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center font-bold text-xs text-dark-950">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent to-accent-secondary flex items-center justify-center font-bold text-xs text-white shadow-lg shadow-accent/20">
               N
             </div>
-            <span className="font-semibold text-xs tracking-wider text-white/70">NexTrade</span>
+            <span className="font-semibold text-xs tracking-wider"><span className="neon-text-cyan">Nex</span><span className="neon-text-magenta">Trade</span></span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-xs text-gray-500 hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="text-xs text-gray-500 hover:text-white transition-colors">Pricing</a>
-            <a href="#faq" className="text-xs text-gray-500 hover:text-white transition-colors">FAQ</a>
+            <a href="#features" className="text-xs text-gray-500 hover:text-accent transition-colors">Features</a>
+            <a href="#pricing" className="text-xs text-gray-500 hover:text-accent transition-colors">Pricing</a>
+            <a href="#faq" className="text-xs text-gray-500 hover:text-accent transition-colors">FAQ</a>
             {user ? (
-              <button onClick={() => navigate("/dashboard")} className="text-xs bg-accent text-dark-950 px-5 py-2 rounded-md font-medium hover:bg-accent-dark transition-all">
+              <button onClick={() => navigate("/dashboard")} className="text-xs bg-gradient-to-r from-accent to-accent-secondary text-white px-5 py-2 rounded-md font-medium hover:shadow-lg hover:shadow-accent/20 transition-all">
                 Dashboard
               </button>
             ) : (
               <>
                 <Link to="/login" className="text-xs text-gray-500 hover:text-white transition-colors">Sign In</Link>
-                <Link to="/signup" className="text-xs bg-accent text-dark-950 px-5 py-2 rounded-md font-medium hover:bg-accent-dark transition-all">
+                <Link to="/signup" className="text-xs bg-gradient-to-r from-accent to-accent-secondary text-white px-5 py-2 rounded-md font-medium hover:shadow-lg hover:shadow-accent/20 transition-all">
                   Get Started
                 </Link>
               </>
@@ -95,7 +103,7 @@ export default function Landing() {
         </div>
 
         {mobileOpen && (
-          <div className="md:hidden bg-dark-900 border-t border-dark-800">
+          <div className="md:hidden bg-dark-900/95 backdrop-blur-xl border-t border-white/5">
             <div className="px-6 py-4 space-y-2">
               {[
                 { label: "Features", href: "#features" },
@@ -103,20 +111,20 @@ export default function Landing() {
                 { label: "FAQ", href: "#faq" },
               ].map((item) => (
                 <a key={item.label} href={item.href} onClick={() => setMobileOpen(false)}
-                  className="block text-xs text-gray-500 hover:text-white px-3 py-2.5 rounded-md transition-colors"
+                  className="block text-xs text-gray-500 hover:text-white hover:bg-white/5 px-3 py-2.5 rounded-md transition-all"
                 >{item.label}</a>
               ))}
               {user ? (
                 <button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }}
-                  className="w-full text-xs bg-accent text-dark-950 px-5 py-2.5 rounded-md font-medium mt-2"
+                  className="w-full text-xs bg-gradient-to-r from-accent to-accent-secondary text-white px-5 py-2.5 rounded-md font-medium mt-2"
                 >Dashboard</button>
               ) : (
                 <div className="pt-2 space-y-2">
                   <Link to="/login" onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center w-full text-xs text-gray-500 hover:text-white px-3 py-2.5 rounded-md border border-dark-600"
+                    className="flex items-center justify-center w-full text-xs text-gray-500 hover:text-white px-3 py-2.5 rounded-md border border-white/10"
                   >Sign In</Link>
                   <Link to="/signup" onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center w-full text-xs bg-accent text-dark-950 px-5 py-2.5 rounded-md font-medium"
+                    className="flex items-center justify-center w-full text-xs bg-gradient-to-r from-accent to-accent-secondary text-white px-5 py-2.5 rounded-md font-medium"
                   >Get Started</Link>
                 </div>
               )}
@@ -126,21 +134,21 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-24 px-6">
+      <section className="relative pt-36 pb-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-3xl">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-dark-700 bg-dark-800 text-gray-500 text-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-accent/20 bg-accent/5 text-accent text-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-neon-pulse" />
                 v2.0 — Live on MEXC, Binance, Bybit
               </span>
             </motion.div>
 
             <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.05] tracking-tight mt-6"
+              className="text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.05] tracking-tight mt-6"
             >
               Intelligent trading,<br />
-              <span className="text-accent">automatically executed</span>
+              <span className="text-gradient-cyan-magenta">automatically executed</span>
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
@@ -152,11 +160,11 @@ export default function Landing() {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
               className="flex items-center gap-3 mt-8"
             >
-              <Link to="/signup" className="bg-accent hover:bg-accent-dark text-dark-950 px-6 py-2.5 rounded-md font-medium text-xs transition-all inline-flex items-center gap-2 group">
+              <Link to="/signup" className="bg-gradient-to-r from-accent to-accent-secondary hover:from-accent-dark hover:to-accent-secondary text-white px-6 py-2.5 rounded-md font-medium text-xs transition-all inline-flex items-center gap-2 group shadow-lg shadow-accent/20">
                 Start Free Trial
                 <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
               </Link>
-              <a href="#features" className="border border-dark-700 hover:border-dark-600 text-gray-500 hover:text-white px-6 py-2.5 rounded-md text-xs transition-all inline-flex items-center gap-2">
+              <a href="#features" className="glass-card text-gray-500 hover:text-white px-6 py-2.5 rounded-md text-xs transition-all inline-flex items-center gap-2">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Watch Demo
               </a>
@@ -167,14 +175,14 @@ export default function Landing() {
             >
               <div className="flex -space-x-2">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="w-7 h-7 rounded-full border-2 border-dark-950 bg-dark-700 flex items-center justify-center text-[9px] font-bold text-gray-500">
+                  <div key={i} className="w-7 h-7 rounded-full border-2 border-dark-950 bg-gradient-to-br from-accent/30 to-accent-secondary/30 flex items-center justify-center text-[9px] font-bold text-gray-400">
                     {String.fromCharCode(65 + i)}
                   </div>
                 ))}
               </div>
               <div className="flex items-center gap-4 text-xs text-gray-600">
                 <span><span className="text-white font-semibold text-sm">{stats ? `${stats.total_users}+` : "—"}</span> traders</span>
-                <span className="w-px h-3 bg-dark-700" />
+                <span className="w-px h-3 bg-white/10" />
                 <span><span className="text-white font-semibold text-sm">{stats ? `${stats.total_trades > 1000 ? (stats.total_trades / 1000).toFixed(0) + "K" : stats.total_trades}+` : "—"}</span> trades</span>
               </div>
             </motion.div>
@@ -183,9 +191,9 @@ export default function Landing() {
       </section>
 
       {/* Live Stats */}
-      <section className="py-16 px-6 border-t border-dark-800">
+      <section className="py-16 px-6 border-t border-white/5">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-dark-800 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-xl overflow-hidden">
             {[
               { label: "Active Traders", value: stats ? `${stats.total_users}+` : "—" },
               { label: "Trades Executed", value: stats ? `${stats.total_trades.toLocaleString()}+` : "—" },
@@ -193,7 +201,7 @@ export default function Landing() {
               { label: "Win Rate", value: stats ? `${stats.win_rate}%` : "—" },
             ].map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-                className="bg-dark-900 p-6 text-center"
+                className="glass-card p-6 text-center"
               >
                 <div className="text-xl font-bold text-white tabular-nums">{s.value}</div>
                 <div className="text-xs text-gray-600 mt-1">{s.label}</div>
@@ -207,7 +215,7 @@ export default function Landing() {
       <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mb-12">
-            <h2 className="text-2xl font-bold">Everything you need to trade smarter</h2>
+            <h2 className="text-2xl font-bold">Everything you need to <span className="text-gradient-cyan-magenta">trade smarter</span></h2>
             <p className="text-sm text-gray-600 mt-2">15 strategies, real-time execution, risk management built in.</p>
           </motion.div>
 
@@ -224,10 +232,10 @@ export default function Landing() {
               { Icon: ShieldIcon, title: "Strategy Scoring", desc: "Each strategy is automatically backtested and scored. Poor performers lose weight over time." },
             ].map((f, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.03 }}
-                className="bg-dark-800 border border-dark-700 rounded-xl p-5 hover:border-dark-600 transition-all"
+                className="glass-card rounded-xl p-5 hover:border-accent/30 transition-all group"
               >
-                <div className="w-8 h-8 mb-3 rounded-lg bg-dark-700 flex items-center justify-center">
-                  <f.Icon className="w-4 h-4 text-gray-400" />
+                <div className="w-8 h-8 mb-3 rounded-lg bg-gradient-to-br from-accent/20 to-accent-secondary/20 flex items-center justify-center group-hover:shadow-lg group-hover:shadow-accent/10 transition-all">
+                  <f.Icon className="w-4 h-4 text-accent" />
                 </div>
                 <h3 className="text-sm font-medium mb-1">{f.title}</h3>
                 <p className="text-xs text-gray-600 leading-relaxed">{f.desc}</p>
@@ -238,10 +246,10 @@ export default function Landing() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-24 px-6 border-t border-dark-800">
+      <section id="pricing" className="py-24 px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mb-12 text-center">
-            <h2 className="text-2xl font-bold">Simple. Transparent.</h2>
+            <h2 className="text-2xl font-bold">Simple. <span className="text-gradient-cyan-magenta">Transparent.</span></h2>
             <p className="text-sm text-gray-600 mt-2">No hidden fees. No lock-in. Cancel anytime.</p>
           </motion.div>
 
@@ -250,12 +258,12 @@ export default function Landing() {
               <motion.div key={plan.name} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.3 }}
                 className={`relative rounded-xl p-6 border transition-all ${
                   plan.popular
-                    ? "bg-dark-800 border-accent/40"
-                    : "bg-dark-800/50 border-dark-700 hover:border-dark-600"
+                    ? "glass-card border-accent/40 shadow-lg shadow-accent/10"
+                    : "glass-card hover:border-accent/20"
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent text-dark-950 text-[10px] font-bold px-3 py-1 rounded-md tracking-wider">
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-accent-secondary text-white text-[10px] font-bold px-3 py-1 rounded-md tracking-wider">
                     BEST VALUE
                   </div>
                 )}
@@ -276,8 +284,8 @@ export default function Landing() {
                 </ul>
                 <Link to="/signup" className={`block text-center py-2 rounded-lg text-xs font-medium transition-all ${
                   plan.popular
-                    ? "bg-accent text-dark-950 hover:bg-accent-dark"
-                    : "border border-dark-700 hover:border-dark-600 text-gray-400 hover:text-white"
+                    ? "bg-gradient-to-r from-accent to-accent-secondary text-white hover:shadow-lg hover:shadow-accent/20"
+                    : "glass-card text-gray-400 hover:text-white"
                 }`}>
                   {plan.cta}
                 </Link>
@@ -288,20 +296,20 @@ export default function Landing() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-24 px-6 border-t border-dark-800">
+      <section id="faq" className="py-24 px-6 border-t border-white/5">
         <div className="max-w-3xl mx-auto">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mb-10">
-            <h2 className="text-2xl font-bold">Frequently asked</h2>
+            <h2 className="text-2xl font-bold">Frequently <span className="text-gradient-cyan-magenta">asked</span></h2>
           </motion.div>
 
           <div className="space-y-2">
             {faqs.map((faq, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 4 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.03 }}
-                className="border border-dark-700 rounded-xl overflow-hidden"
+                className="glass-card rounded-xl overflow-hidden"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-dark-800/50 transition-colors"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-accent/5 transition-colors"
                 >
                   <span className="text-xs text-gray-400 font-medium pr-4">{faq.q}</span>
                   <svg className={`w-3 h-3 shrink-0 text-gray-600 transition-transform ${openFaq === i ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,16 +326,16 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6 border-t border-dark-800">
+      <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <h2 className="text-2xl font-bold mb-3">
-              Ready to trade <span className="text-accent">on autopilot?</span>
+              Ready to trade <span className="text-gradient-cyan-magenta">on autopilot?</span>
             </h2>
             <p className="text-sm text-gray-600 mb-8 max-w-md mx-auto">
               Join {stats ? `${stats.total_users}+ ` : ""}traders who already automated their trading. Start risk-free with paper mode.
             </p>
-            <Link to="/signup" className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-dark-950 px-8 py-2.5 rounded-md font-medium text-xs transition-all group">
+            <Link to="/signup" className="inline-flex items-center gap-2 bg-gradient-to-r from-accent to-accent-secondary hover:from-accent-dark hover:to-accent-secondary text-white px-8 py-2.5 rounded-md font-medium text-xs transition-all group shadow-lg shadow-accent/20">
               Start Free Trial
               <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </Link>
@@ -336,13 +344,13 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-dark-800 py-12 px-6">
+      <footer className="border-t border-white/5 py-12 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-12 gap-8 mb-8">
             <div className="md:col-span-4">
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-6 h-6 rounded-md bg-accent flex items-center justify-center font-bold text-xs text-dark-950">N</div>
-                <span className="font-semibold text-xs text-gray-500">NexTrade</span>
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-accent to-accent-secondary flex items-center justify-center font-bold text-xs text-white">N</div>
+                <span className="font-semibold text-xs"><span className="neon-text-cyan">Nex</span><span className="neon-text-magenta">Trade</span></span>
               </div>
               <p className="text-xs text-gray-700 leading-relaxed max-w-xs">
                 Institutional-grade AI trading bots for MEXC, Binance, and Bybit. Automated, self-custodial, transparent.
@@ -351,18 +359,18 @@ export default function Landing() {
             <div className="md:col-span-2">
               <h4 className="text-[10px] font-semibold tracking-widest text-gray-700 mb-3 uppercase">Company</h4>
               <ul className="space-y-2 text-xs text-gray-600">
-                <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
-                <li><Link to="/changelog" className="hover:text-white transition-colors">Changelog</Link></li>
-                <li><Link to="/security" className="hover:text-white transition-colors">Security</Link></li>
-                <li><Link to="/status" className="hover:text-white transition-colors">System Status</Link></li>
+                <li><Link to="/about" className="hover:text-accent transition-colors">About</Link></li>
+                <li><Link to="/changelog" className="hover:text-accent transition-colors">Changelog</Link></li>
+                <li><Link to="/security" className="hover:text-accent transition-colors">Security</Link></li>
+                <li><Link to="/status" className="hover:text-accent transition-colors">System Status</Link></li>
               </ul>
             </div>
             <div className="md:col-span-2">
               <h4 className="text-[10px] font-semibold tracking-widest text-gray-700 mb-3 uppercase">Legal</h4>
               <ul className="space-y-2 text-xs text-gray-600">
-                <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
-                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/whitepaper" className="hover:text-white transition-colors">Whitepaper</Link></li>
+                <li><Link to="/terms" className="hover:text-accent transition-colors">Terms of Service</Link></li>
+                <li><Link to="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/whitepaper" className="hover:text-accent transition-colors">Whitepaper</Link></li>
               </ul>
             </div>
             <div className="md:col-span-2">
@@ -374,7 +382,7 @@ export default function Landing() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-dark-800 pt-6 text-center text-[11px] text-gray-700">
+          <div className="border-t border-white/5 pt-6 text-center text-[11px] text-gray-700">
             &copy; 2026 NexTrade AI Ltd.
           </div>
         </div>
