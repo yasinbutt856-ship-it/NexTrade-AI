@@ -9,7 +9,7 @@ interface ServiceStatus {
   lastCheck: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "https://mexc-trading-bot-production-c215.up.railway.app";
+const API_URL = import.meta.env.VITE_API_URL || "https://5148f32ad99cf7d9-154-81-236-235.serveousercontent.com";
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {

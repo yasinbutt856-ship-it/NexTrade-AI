@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "https://mexc-trading-bot-production-c215.up.railway.app";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://5148f32ad99cf7d9-154-81-236-235.serveousercontent.com";
 
 let _token: string | null = localStorage.getItem("token");
 
