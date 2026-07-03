@@ -8,15 +8,17 @@ jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Build frontend
-        working-directory: frontend
+      - name: Trigger Vercel Deploy Hook
         run: |
-          npm ci --legacy-peer-deps
-          npm run build
-      - name: Deploy to Vercel
-        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: frontend
+          if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK }}" ]; then
+            echo "::error::VERCEL_DEPLOY_HOOK secret is not set."
+            echo ""
+            echo "To fix this:"
+            echo "  1. Go to https://vercel.com/abeermeer1/frontend/settings/git"
+            echo "  2. Under 'Deploy Hooks', create a hook for the 'main' branch"
+            echo "  3. Copy the hook URL"
+            echo "  4. Go to https://github.com/yasinbutt856-ship-it/NexTrade-AI/settings/secrets/actions"
+            echo "  5. Add a new secret named VERCEL_DEPLOY_HOOK with the hook URL"
+            exit 1
+          fi
+          curl -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
